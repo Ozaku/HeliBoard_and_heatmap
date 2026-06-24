@@ -1,0 +1,48 @@
+================================================================================
+
+BUG: Instrumentation status stopped updating (beta 0.0.0.6)
+
+================================================================================
+
+
+
+SYMPTOMS
+
+  User saw frozen snapshot (e.g. anniversary / 3 words) after more typing.
+
+
+
+CAUSES
+
+  1. Status UI used remember{} without invalidating when returning to settings screen.
+
+  2. IME process cached SharedPreferences for "learning enabled" — could skip commits.
+
+  3. "Words committed" is per text field (resets on new field) — looked stuck vs lifetime.
+
+
+
+FIX (beta 0.0.0.7)
+
+  - Refresh status on ON_RESUME + prefChanged tick (LaunchedEffect(refreshTick)).
+
+  - HeatmapLearningSettings_v2: fresh cross-process prefs read in IME.
+
+  - Snapshot v4: lifetime commit counter, snapshot saved timestamp, clearer labels.
+
+
+
+RETEST
+
+  installDebugNoMinify → type in external app → open Heatmap settings (auto-refresh)
+
+  Lifetime commits should increase; Snapshot saved: Ns ago should update.
+
+
+
+================================================================================
+
+END
+
+================================================================================
+

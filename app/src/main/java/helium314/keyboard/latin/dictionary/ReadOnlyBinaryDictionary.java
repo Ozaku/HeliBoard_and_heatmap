@@ -134,4 +134,16 @@ public final class ReadOnlyBinaryDictionary extends Dictionary {
     public String getHash() {
         return mBinaryDictionary.getHash();
     }
+
+    // ai-note: enumeration entry point for the heatmap gesture lexicon (HeatmapLexiconTrie_v1).
+    // Guarded by the same read lock as suggestions so it is safe while the dictionary is live.
+    public void forEachWord(final BinaryDictionary.WordFrequencyConsumer consumer) {
+        if (mLock.readLock().tryLock()) {
+            try {
+                mBinaryDictionary.forEachWord(consumer);
+            } finally {
+                mLock.readLock().unlock();
+            }
+        }
+    }
 }

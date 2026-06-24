@@ -1,0 +1,110 @@
+================================================================================
+FEATURE 4 — NAUGHTY LIST v1 — SUPERSEDED
+Use: 13_FEATURE_common_typo_list_v2.txt (renamed "Common Typo List")
+================================================================================
+FEATURE 4 — NAUGHTY LIST (single list, ban + dictionary actions) v1
+Related: Planned Features.txt §4
+================================================================================
+
+USER INTENT (clarified)
+  ONE list in settings titled "Naughty List" (not separate naughty vs ban menus).
+  Strings that are repeatedly deleted or corrected away accumulate negative weight,
+  eventually becoming unable to output via swipe or autocorrect.
+  User actions per entry:
+    1) Unban — remove from naughty list (can appear again, weights may remain soft).
+    2) Remove from user dictionary if present — does NOT remove from naughty list
+       and does NOT reset negative training from Feature 3.
+  Chronic example: "tye" → auto-force toward "the" unless user unbans "tye".
+
+NOTE: User initially mentioned "ban list" then clarified single list — this doc
+uses only "Naughty List" terminology.
+
+--------------------------------------------------------------------------------
+ENTRY STATES (state machine)
+--------------------------------------------------------------------------------
+
+  STATE 0 — NORMAL
+    wordWeight negative only (Feature 3 soft).
+
+  STATE 1 — NAUGHTY (soft ban)
+    Very low probability in suggestions; still might appear with strong context.
+
+  STATE 2 — BANNED (hard ban)
+    Cannot be output by swipe decode or autocorrect commit.
+    If user literally tap-types the string key-by-key, behavior TBD (see questions):
+      option A: allow literal user typing always
+      option B: block only gesture/autocorrect pipeline
+    User prompt implies pipeline ban, not preventing manual key entry.
+
+  STATE 3 — FORCED TARGET (optional sub-flag)
+    When banned string would have been produced, replace with topCorrectionTarget
+    (e.g. always offer/commit "the" instead of "tye").
+
+Transitions:
+  NORMAL → NAUGHTY: correctionCount >= N1 in rolling window T.
+  NAUGHTY → BANNED: correctionCount >= N2 or deleteCount >= D.
+  Any → NORMAL: user Unban.
+  User manual "Add to Naughty List" → BANNED directly.
+
+Suggested starting thresholds (tunable):
+  N1 = 3 corrections same pair within 7 days
+  N2 = 8 corrections or 5 deletes without accepting word
+
+--------------------------------------------------------------------------------
+SETTINGS UI (future — spec only)
+--------------------------------------------------------------------------------
+  Path: Settings › Correction › Naughty List
+
+  List row shows:
+    - string
+    - state badge (Naughty / Banned)
+    - optional "usually becomes: the"
+    - hit count, last seen date
+
+  Row actions:
+    - Unban (removes from list, state NORMAL but soft weights may linger until decay)
+    - Remove from personal dictionary (if in user dict only)
+    - (Optional) Reset learning for this string only
+
+  Empty state: explanatory text about automatic promotion.
+
+--------------------------------------------------------------------------------
+INTERACTION WITH DICTIONARIES
+--------------------------------------------------------------------------------
+  Main binary dict: cannot delete entries (read-only). Ban is scoring-only.
+  User dictionary: user may delete word "tye" but ban remains.
+  User history dict: prevent re-adding banned strings on commit path.
+  Whitelist / contacts: banned string should not resurrect from contact names
+    if it matches typo — needs policy (e.g. ban wins for exact match short words).
+
+--------------------------------------------------------------------------------
+AUTOCORRECT BEHAVIOR WHEN BANNED
+--------------------------------------------------------------------------------
+  If composing text equals banned string:
+    - Force topCorrectionTarget if set (tye → the).
+    - Else pick highest-scoring dictionary word sharing longest prefix? (fallback)
+  Show underline / strip indication? Optional subtle icon so user knows why.
+
+--------------------------------------------------------------------------------
+DATA MODEL
+--------------------------------------------------------------------------------
+  NaughtyEntry {
+    string text
+    locale: optional (same typo may differ per language)
+    state: SOFT | HARD
+    topCorrectionTarget: String?
+    correctionCount, deleteCount
+    firstSeen, lastSeen
+    source: AUTO | USER_PINNED
+  }
+
+--------------------------------------------------------------------------------
+PRIVACY & SAFETY
+--------------------------------------------------------------------------------
+  - False ban on valid rare words (names, slang): user Unban is mandatory easy path.
+  - Export naughty list with backup? (open question)
+  - Do not ban strings containing @ or URLs by auto rules without user confirm.
+
+================================================================================
+END FEATURE 4 v1
+================================================================================

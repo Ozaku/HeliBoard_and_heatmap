@@ -1,0 +1,57 @@
+================================================================================
+
+BLOCK 1 — INSTRUMENTATION SUB-STEPS
+
+================================================================================
+
+
+
+─── DONE through beta 0.0.0.9 ───
+
+  WordSlot, paragraph journal, settings UI, WordSession schema, commit metadata,
+
+  cross-process status, host-app session reset, snapshot beta label
+
+
+
+─── DONE (beta 0.0.0.10) — implement & user build ───
+
+  1.11 Correction detector skeleton (flush events, no diff logic)
+
+
+
+─── DONE (beta 0.0.0.11) — settings + policy stub (Block 5 wires mutation) ───
+
+  1.10b Per-mode Heatmap autocorrect toggles (tap / swipe); status + logcat route=
+
+
+
+─── DONE (beta 0.0.0.12) — user build to verify ───
+
+  1.12 In-window edit detection stub (selection + field probe on flush; pending finalText)
+
+
+
+─── DONE (beta 0.0.0.13) — user build to verify ───
+
+  1.13 JSON export + file dump toggle (latest.json on commit; share + archives on flush)
+
+
+
+─── DONE (beta 0.0.0.17) — user build to verify ───
+
+  1.14 Metrics hooks (commit path ms, heap on flush, prefix-branch stub, status + JSON)
+
+
+
+─── BLOCK 1 COMPLETE — next: Block 2 learning store (roadmap step 8+) ───
+
+─── BLOCK 2 step 8 DONE (beta 0.0.0.18) — SQLite store verified on device ───
+
+─── BLOCK 2 step 9 DONE (beta 0.0.0.19) — coordinate map + layout hash ───
+  See 42_DESIGN_block2_step9_coordinate_map_v1.txt
+
+
+
+================================================================================
+

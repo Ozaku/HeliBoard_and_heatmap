@@ -1,0 +1,42 @@
+================================================================================
+
+BUGFIX — Export JSON crash (beta 0.0.0.14)
+
+================================================================================
+
+
+
+SYMPTOM
+
+  Tap "Export session JSON" → crash:
+
+  IllegalArgumentException: Failed to find configured root that contains
+
+  /data/user_de/0/.../files/heatmap_learning/session_export_latest.json
+
+
+
+CAUSE
+
+  HeatmapLearningFiles_v1 wrote to device-protected storage (user_de).
+
+  Gesture FileProvider files-path only maps credential storage filesDir.
+
+
+
+FIX
+
+  HeatmapLearningFiles_v2 — regular applicationContext.filesDir
+
+  migrateFromDeviceProtectedIfNeeded() on read/write
+
+  HeatmapExportShare_v1 — catch IllegalArgumentException, return false (toast)
+
+
+
+================================================================================
+
+END
+
+================================================================================
+

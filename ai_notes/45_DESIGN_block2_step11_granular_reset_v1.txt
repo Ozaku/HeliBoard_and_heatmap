@@ -1,0 +1,42 @@
+DESIGN — Block 2 step 11 (full): granular learning resets
+================================================================================
+Beta target: 0.0.0.21 | ROADMAP_STEP 11
+Supersedes partial spec in 40_DESIGN_reset_learning_step11_partial_v1.txt
+
+UI: Heatmap Smart Keyboard → Learning data
+  1. Reset swipe path biases
+  2. Reset key geometry
+  3. Reset typo weights (stub until Block 6)
+  4. Reset all learning (existing nuclear wipe via HeatmapLearningReset_v1)
+
+Each button: HeatmapLearningResetConfirmDialog_v2 — 5s countdown, Yes / NO!!
+
+--------------------------------------------------------------------------------
+LAYER TABLE MAP (HeatmapLearningReset_v2)
+--------------------------------------------------------------------------------
+SWIPE PATH (wipeSwipePathBiases)
+  DELETE heatmap_path_bucket
+  DELETE heatmap_alignment_offset WHERE input_mode = 'SWIPE'
+  KEEP: commits, key_stat, word_pair, key_bounds, tap alignment rows
+
+GEOMETRY (wipeGeometryData)
+  DELETE heatmap_key_bounds
+  DELETE heatmap_alignment_offset  (all modes — finger vs center offsets)
+  KEEP: commits, key_stat, word_pair, path_bucket
+
+TYPO WEIGHTS (wipeTypoWeights) — STUB Block 6
+  No tables yet. Log + success toast; future: heatmap_typo_weight / naughty list.
+  KEEP: everything
+
+ALL (wipeAllTrainingData — v1)
+  Full DB wipe + exports + heatmap_* prefs except user toggles
+
+--------------------------------------------------------------------------------
+VERIFY
+--------------------------------------------------------------------------------
+  1. Note status counts (commits, bounds, path buckets when swipe exists)
+  2. Reset geometry only → bounds 0, commits unchanged
+  3. Reset swipe path only → path_bucket 0, commits unchanged
+  4. Reset all → everything 0
+
+NEXT: Block 2 step 12 — see 46_DESIGN_block2_step12_correction_weights_v1.txt (DONE beta 0.0.0.22)

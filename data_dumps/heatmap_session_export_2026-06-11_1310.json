@@ -1,0 +1,178 @@
+{
+  "schemaVersion": 1,
+  "exportedAtMs": 1780512935690,
+  "exportSource": "ime_flush_FIELD_BLUR",
+  "build": {
+    "beta": "0.0.0.18",
+    "roadmapStep": 8,
+    "statusLine": "Heatmap learning beta 0.0.0.18 (roadmap step 8)"
+  },
+  "settings": {
+    "learningEnabled": true,
+    "paragraphWindowChars": 3000,
+    "tapHeatmapAutocorrect": false,
+    "swipeHeatmapAutocorrect": true,
+    "autoFileDump": false
+  },
+  "instrumentation": {
+    "lifetimeCommits": 531,
+    "lastFlushReason": "FIELD_BLUR",
+    "lastFlushHost": "com.google.android.apps.translate",
+    "totalFlushes": 372,
+    "selectionEditEvents": 148,
+    "pendingFinalTextSync": 6,
+    "lastFieldProbe": "before=34 after=0 fp=455787426",
+    "snapshotBeta": "0.0.0.18",
+    "snapshotJournalChars": 33,
+    "snapshotJournalWords": 6,
+    "snapshotLastWord": "shop",
+    "snapshotHostPackage": "com.google.android.apps.translate"
+  },
+  "metrics": {
+    "commitCount": 152,
+    "commitLastMs": 56,
+    "commitAvgMs": 47,
+    "commitMaxMs": 78,
+    "commitP95Ms": 64,
+    "heapUsedMbAtFlush": 8,
+    "heapMaxMbAtFlush": 256,
+    "prefixBranchStubCount": 0
+  },
+  "learningStore": {
+    "schemaVersion": 1,
+    "dbPath": "\/data\/user\/0\/helium314.keyboard.debug\/files\/heatmap_learning\/heatmap_store.db",
+    "persistedCommitCount": 15,
+    "keyStatRows": 9,
+    "wordPairRows": 13,
+    "layoutHash": "layout_v0",
+    "localeTag": "en-US"
+  },
+  "wordSessions": [
+    {
+      "slotId": 1,
+      "sessionGeneration": 7,
+      "hostPackage": "com.google.android.apps.translate",
+      "inputMode": "TAP",
+      "commitType": "DECIDED",
+      "committedText": "eighty",
+      "finalText": "eighty",
+      "typedText": "eighty",
+      "separatorCharCount": 1,
+      "committedAtMs": 1780512924420,
+      "swipeTracePointCount": 0,
+      "tapKeyCount": 0
+    },
+    {
+      "slotId": 2,
+      "sessionGeneration": 7,
+      "hostPackage": "com.google.android.apps.translate",
+      "inputMode": "TAP",
+      "commitType": "DECIDED",
+      "committedText": "dollar",
+      "finalText": "dollar",
+      "typedText": "dollar",
+      "separatorCharCount": 1,
+      "committedAtMs": 1780512926474,
+      "swipeTracePointCount": 0,
+      "tapKeyCount": 0
+    },
+    {
+      "slotId": 3,
+      "sessionGeneration": 7,
+      "hostPackage": "com.google.android.apps.translate",
+      "inputMode": "TAP",
+      "commitType": "DECIDED",
+      "committedText": "noodles",
+      "finalText": "noodles",
+      "typedText": "noodles",
+      "separatorCharCount": 1,
+      "committedAtMs": 1780512928729,
+      "swipeTracePointCount": 0,
+      "tapKeyCount": 0
+    },
+    {
+      "slotId": 4,
+      "sessionGeneration": 7,
+      "hostPackage": "com.google.android.apps.translate",
+      "inputMode": "TAP",
+      "commitType": "DECIDED",
+      "committedText": "in",
+      "finalText": "in",
+      "typedText": "in",
+      "separatorCharCount": 1,
+      "committedAtMs": 1780512929689,
+      "swipeTracePointCount": 0,
+      "tapKeyCount": 0
+    },
+    {
+      "slotId": 5,
+      "sessionGeneration": 7,
+      "hostPackage": "com.google.android.apps.translate",
+      "inputMode": "TAP",
+      "commitType": "DECIDED",
+      "committedText": "my",
+      "finalText": "my",
+      "typedText": "my",
+      "separatorCharCount": 1,
+      "committedAtMs": 1780512930594,
+      "swipeTracePointCount": 0,
+      "tapKeyCount": 0
+    },
+    {
+      "slotId": 6,
+      "sessionGeneration": 7,
+      "hostPackage": "com.google.android.apps.translate",
+      "inputMode": "TAP",
+      "commitType": "DECIDED",
+      "committedText": "shop",
+      "finalText": "shop",
+      "typedText": "shop",
+      "separatorCharCount": 1,
+      "committedAtMs": 1780512933001,
+      "swipeTracePointCount": 0,
+      "tapKeyCount": 0
+    }
+  ],
+  "paragraphJournal": [
+    {
+      "slotId": 1,
+      "word": "eighty",
+      "charCount": 7
+    },
+    {
+      "slotId": 2,
+      "word": "dollar",
+      "charCount": 7
+    },
+    {
+      "slotId": 3,
+      "word": "noodles",
+      "charCount": 8
+    },
+    {
+      "slotId": 4,
+      "word": "in",
+      "charCount": 3
+    },
+    {
+      "slotId": 5,
+      "word": "my",
+      "charCount": 3
+    },
+    {
+      "slotId": 6,
+      "word": "shop",
+      "charCount": 5
+    }
+  ],
+  "liveImeSession": {
+    "sessionGeneration": 7,
+    "wordsCommitted": 6,
+    "journalUsedChars": 33,
+    "journalMaxChars": 3000,
+    "journalWordCount": 6,
+    "lastSlotId": 6,
+    "lastWord": "shop",
+    "lastHostPackage": "com.google.android.apps.translate"
+  }
+}

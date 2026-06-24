@@ -1,0 +1,82 @@
+================================================================================
+OPEN QUESTIONS v1 — decisions needed from maintainer
+(Add answers inline or in 16_OPEN_QUESTIONS_v2.txt when resolved)
+================================================================================
+
+SWIPE / DECODE
+--------------------------------------------------------------------------------
+Q1. Primary engineering strategy for swipe v2?
+    ( ) Hybrid: Kotlin re-rank first, then native policy (recommended in 15)
+    ( ) Native-only from start
+    ( ) Kotlin-only permanently
+    ( ) Keep external swypelibs as fallback
+
+Q2. On banned/naughty strings, if user deliberately tap-types key-by-key to spell
+    "tye", should the keyboard allow it or force correction?
+    User text leans toward blocking swipe/autocorrect only — confirm.
+
+Q3. Loop gestures (PLASTIC example): must v1 support loops or defer to v2?
+    Loops are harder than straight+corner paths.
+
+Q4. Should runner-up suggestions show in strip always, or only after low confidence?
+
+HEATMAP / JOURNAL
+--------------------------------------------------------------------------------
+Q5. Default paragraph window size: 1000, 1500, 2000, or device-tier presets?
+
+Q6. Should learning run in password / private incognito fields? (Recommend: NO)
+
+Q7. Store full stroke polylines long-term, or only simplified signatures (~50 bytes)?
+    Affects privacy and storage.
+
+Q8. Is a visible heatmap debug screen desired in v1, or only hidden developer option?
+
+Q9. Per-app learning profiles (work apps vs social) — wanted later or never?
+
+TRAINING / WEIGHTS
+--------------------------------------------------------------------------------
+Q10. How fast should learning adapt? (aggressive vs conservative defaults)
+     Aggressive = fewer corrections before strong bias; risk of wrong lock-in.
+
+Q11. Should learned biases export/import with backup (JSON) for user device migration?
+
+Q12. Multilingual: separate heatmap per locale, or one global with locale tag on events?
+
+NAUGHTY LIST
+--------------------------------------------------------------------------------
+Q13. Auto-promotion thresholds: agree N1=3 / N2=8 corrections (13_FEATURE) or stricter?
+
+Q14. When unbanning, should soft negative weights reset to zero or decay naturally?
+
+Q15. Can user manually add words to Naughty List without waiting for auto promotion?
+
+KEY GEOMETRY
+--------------------------------------------------------------------------------
+Q16. ±22% — apply to width and height independently, or uniform scale only?
+
+Q17. Should swipe mode EVER resize hit boxes, or bias-only forever?
+
+Q18. Reset geometry: one button for both modes or separate tap/swipe resets?
+
+PRODUCT / SCOPE
+--------------------------------------------------------------------------------
+Q19. Minimum Android version / devices to support? (affects SQLite, storage caps)
+
+Q20. Is spell-checker service in scope for same learning, or IME-only v1?
+
+Q21. Relationship to existing GestureDataGathering research mode — extend or ignore?
+
+LEGAL / STORE
+--------------------------------------------------------------------------------
+Q22. Play Store data safety: learning data stays on device — need privacy policy text
+     stating local correction statistics; confirm acceptable.
+
+--------------------------------------------------------------------------------
+AI AGENT NOTES
+--------------------------------------------------------------------------------
+When user answers, create 16_OPEN_QUESTIONS_v2.txt with ANSWERED section or append
+to 00_MASTER_PLAN_v2. Do not delete v1 — keeps history for additive editing.
+
+================================================================================
+END OPEN QUESTIONS v1
+================================================================================

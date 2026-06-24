@@ -1,0 +1,94 @@
+================================================================================
+FEATURE 5 — DUAL-MODE KEY GEOMETRY (TAP vs SWIPE) v1
+Related: Planned Features.txt §5; ProximityInfo in 04_swipe
+================================================================================
+
+USER INTENT (summary)
+  Heatmap data fully segregated by input mode.
+  TAP mode: adjust invisible hit target size per key based on miss/ hit patterns.
+  SWIPE mode: separate biases — trust swipe more on keys user never misses when
+  swiping even if tap profile is poor (Y example in user prompt).
+  LOCKED v3 limits: shrink at most ~20–22% (80% minimum size). Grow only until
+  inter-key gap filled — NO overlap with neighbors. If two adjacent keys need
+  space, meet at halfway. Invisible position shift: edge must not cross original
+  key center. Touching OK, overlapping forbidden. (See 23_MAINTAINER v3, Composer #)
+
+--------------------------------------------------------------------------------
+WHAT CHANGES VISUALLY
+--------------------------------------------------------------------------------
+  User asked for INVISIBLE changes — key caps/labels stay same size on screen;
+  only touch/proximity geometry changes. Matches ProximityInfo purpose (hit region
+  for decoding, not drawable key bounds).
+
+--------------------------------------------------------------------------------
+TWO MECHANISMS (complementary)
+--------------------------------------------------------------------------------
+
+MECHANISM 1 — HIT BOX SCALE (tap-primary, Feature 5 explicit)
+  For each key k in TAP mode:
+    scaleW[k], scaleH[k] clamped to [0.78, 1.22]
+  Rules from heatmap:
+    - User often misses k aiming for neighbor k2 → grow k slightly.
+    - User often hits k then corrects to different letter → shrink k slightly.
+  Update: slow EMA (exponential moving average) so layout doesn't jump per word.
+
+MECHANISM 2 — PROXIMITY BIAS (swipe-primary, overlaps Feature 3)
+  Swipe may not use hit box grow the same way — instead adjust ProximityInfo
+  neighbor weights so decode prefers keys user actually means on swipe paths.
+  "Trust swipe more" = do not shrink swipe proximity for keys with good swipe stats
+  even if tap stats are bad.
+
+--------------------------------------------------------------------------------
+SEGREGATION ENFORCEMENT
+--------------------------------------------------------------------------------
+  On pointer down session start:
+    classify mode = SWIPE if gesture recognized else TAP.
+  Lock mode for entire word until commit.
+  Never read tap heatmap during swipe decode scoring; never apply swipe scale to
+  tap hit boxes.
+
+  Edge case: user starts tap then slides into gesture — follow GestureEnabler /
+  PointerTracker existing transition rules; on transition, close tap session without
+  applying swipe geometry to same partial word unless product decision says merge.
+
+--------------------------------------------------------------------------------
+COMPUTING SCALE FROM COUNTERS
+--------------------------------------------------------------------------------
+  Let errFrom[k] = correctedFromCount (user was on k but wanted elsewhere)
+  Let errTo[k]   = correctedToCount (user wanted k but got elsewhere)
+  tapScore[k] = errTo[k] - errFrom[k]   // positive → grow, negative → shrink
+
+  deltaScale = clamp(tapScore[k] * eta, -0.22, +0.22)   // eta small, e.g. 0.01
+  scale[k] = clamp(scale[k] + deltaScale, 0.78, 1.22)
+
+  Swipe path: use bias only (Feature 3), scale fixed at 1.0 unless user enables
+  experimental "swipe hit adjust" later.
+
+--------------------------------------------------------------------------------
+REBUILDING ProximityInfo
+--------------------------------------------------------------------------------
+  ProximityInfo built when keyboard layout loads (ProximityInfo.java → JNI).
+  Options:
+    A) Rebuild on layout load from persisted scale[] arrays (tap/swipe separate
+       native handles — heavier).
+    B) Single ProximityInfo + per-mode multiplier table in native (lighter).
+    C) Tap: Java touch dispatch expansion before key event; Swipe: native only.
+
+  Recommend B for swipe scoring, C optional for tap if native rebuild costly.
+
+--------------------------------------------------------------------------------
+RESET & BOUNDS
+--------------------------------------------------------------------------------
+  Settings: Reset key geometry to defaults (both modes).
+  Per-key ceiling prevents one key stealing area from neighbors illegally —
+  may need collision resolution so expanded keys don't overlap (max overlap 8px?).
+
+--------------------------------------------------------------------------------
+USER TRUST
+--------------------------------------------------------------------------------
+  Sudden large jumps feel broken — cap delta per day, require minimum sample count
+  (e.g. 5 corrections) before first resize for a key.
+
+================================================================================
+END FEATURE 5 v1
+================================================================================

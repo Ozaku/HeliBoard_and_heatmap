@@ -1,0 +1,276 @@
+{
+  "schemaVersion": 1,
+  "exportedAtMs": 1781290010939,
+  "exportSource": "ime_commit",
+  "build": {
+    "beta": "0.0.0.20",
+    "roadmapStep": 10,
+    "statusLine": "Heatmap learning beta 0.0.0.20 (roadmap step 10)"
+  },
+  "settings": {
+    "learningEnabled": true,
+    "paragraphWindowChars": 3000,
+    "tapHeatmapAutocorrect": false,
+    "swipeHeatmapAutocorrect": true,
+    "autoFileDump": false
+  },
+  "instrumentation": {
+    "lifetimeCommits": 352,
+    "lastFlushReason": "HOST_CHANGED",
+    "lastFlushHost": "com.run.tower.defense",
+    "totalFlushes": 126,
+    "selectionEditEvents": 61,
+    "pendingFinalTextSync": 4,
+    "lastFieldProbe": "skip=no_connection",
+    "snapshotBeta": "0.0.0.20",
+    "snapshotJournalChars": 50,
+    "snapshotJournalWords": 11,
+    "snapshotLastWord": "t",
+    "snapshotHostPackage": "com.run.tower.defense"
+  },
+  "metrics": {
+    "commitCount": 351,
+    "commitLastMs": 41,
+    "commitAvgMs": 53,
+    "commitMaxMs": 101,
+    "commitP95Ms": 55,
+    "heapUsedMbAtFlush": 11,
+    "heapMaxMbAtFlush": 256,
+    "prefixBranchStubCount": 0
+  },
+  "learningStore": {
+    "schemaVersion": 3,
+    "dbPath": "\/data\/user\/0\/helium314.keyboard.debug\/files\/heatmap_learning\/heatmap_store.db",
+    "persistedCommitCount": 352,
+    "keyStatRows": 23,
+    "wordPairRows": 288,
+    "layoutHash": "lh_efffa97086f33f4d8af32aa512eff7cf96d242b177cc64fe9aae0b391aeff3ff",
+    "localeTag": "en-US",
+    "keyBoundsRows": 26,
+    "pathBucketRows": 0,
+    "alignmentOffsetRows": 0
+  },
+  "wordSessions": [
+    {
+      "slotId": 1,
+      "sessionGeneration": 58,
+      "hostPackage": "com.run.tower.defense",
+      "inputMode": "TAP",
+      "commitType": "DECIDED",
+      "committedText": "testing",
+      "finalText": "testing",
+      "typedText": "testing",
+      "separatorCharCount": 1,
+      "committedAtMs": 1781289972830,
+      "swipeTracePointCount": 0,
+      "tapKeyCount": 0
+    },
+    {
+      "slotId": 2,
+      "sessionGeneration": 58,
+      "hostPackage": "com.run.tower.defense",
+      "inputMode": "TAP",
+      "commitType": "DECIDED",
+      "committedText": "my",
+      "finalText": "my",
+      "typedText": "my",
+      "separatorCharCount": 1,
+      "committedAtMs": 1781289973538,
+      "swipeTracePointCount": 0,
+      "tapKeyCount": 0
+    },
+    {
+      "slotId": 3,
+      "sessionGeneration": 58,
+      "hostPackage": "com.run.tower.defense",
+      "inputMode": "TAP",
+      "commitType": "DECIDED",
+      "committedText": "keyboard",
+      "finalText": "keyboard",
+      "typedText": "keyboard",
+      "separatorCharCount": 1,
+      "committedAtMs": 1781289976689,
+      "swipeTracePointCount": 0,
+      "tapKeyCount": 0
+    },
+    {
+      "slotId": 4,
+      "sessionGeneration": 58,
+      "hostPackage": "com.run.tower.defense",
+      "inputMode": "TAP",
+      "commitType": "DECIDED",
+      "committedText": "ignore",
+      "finalText": "ignore",
+      "typedText": "ignore",
+      "separatorCharCount": 1,
+      "committedAtMs": 1781289979061,
+      "swipeTracePointCount": 0,
+      "tapKeyCount": 0
+    },
+    {
+      "slotId": 5,
+      "sessionGeneration": 58,
+      "hostPackage": "com.run.tower.defense",
+      "inputMode": "TAP",
+      "commitType": "DECIDED",
+      "committedText": "gibberish",
+      "finalText": "gibberish",
+      "typedText": "gibberish",
+      "separatorCharCount": 1,
+      "committedAtMs": 1781289983160,
+      "swipeTracePointCount": 0,
+      "tapKeyCount": 0
+    },
+    {
+      "slotId": 6,
+      "sessionGeneration": 58,
+      "hostPackage": "com.run.tower.defense",
+      "inputMode": "TAP",
+      "commitType": "DECIDED",
+      "committedText": "m",
+      "finalText": "m",
+      "typedText": "m",
+      "separatorCharCount": 1,
+      "committedAtMs": 1781290004214,
+      "swipeTracePointCount": 0,
+      "tapKeyCount": 0
+    },
+    {
+      "slotId": 7,
+      "sessionGeneration": 58,
+      "hostPackage": "com.run.tower.defense",
+      "inputMode": "TAP",
+      "commitType": "DECIDED",
+      "committedText": "pg",
+      "finalText": "pg",
+      "typedText": "pg",
+      "separatorCharCount": 1,
+      "committedAtMs": 1781290006466,
+      "swipeTracePointCount": 0,
+      "tapKeyCount": 0
+    },
+    {
+      "slotId": 8,
+      "sessionGeneration": 58,
+      "hostPackage": "com.run.tower.defense",
+      "inputMode": "TAP",
+      "commitType": "DECIDED",
+      "committedText": "e",
+      "finalText": "e",
+      "typedText": "e",
+      "separatorCharCount": 1,
+      "committedAtMs": 1781290007846,
+      "swipeTracePointCount": 0,
+      "tapKeyCount": 0
+    },
+    {
+      "slotId": 9,
+      "sessionGeneration": 58,
+      "hostPackage": "com.run.tower.defense",
+      "inputMode": "TAP",
+      "commitType": "DECIDED",
+      "committedText": "t",
+      "finalText": "t",
+      "typedText": "t",
+      "separatorCharCount": 1,
+      "committedAtMs": 1781290008709,
+      "swipeTracePointCount": 0,
+      "tapKeyCount": 0
+    },
+    {
+      "slotId": 10,
+      "sessionGeneration": 58,
+      "hostPackage": "com.run.tower.defense",
+      "inputMode": "TAP",
+      "commitType": "DECIDED",
+      "committedText": "t",
+      "finalText": "t",
+      "typedText": "t",
+      "separatorCharCount": 1,
+      "committedAtMs": 1781290009413,
+      "swipeTracePointCount": 0,
+      "tapKeyCount": 0
+    },
+    {
+      "slotId": 11,
+      "sessionGeneration": 58,
+      "hostPackage": "com.run.tower.defense",
+      "inputMode": "TAP",
+      "commitType": "DECIDED",
+      "committedText": "t",
+      "finalText": "t",
+      "typedText": "t",
+      "separatorCharCount": 1,
+      "committedAtMs": 1781290010909,
+      "swipeTracePointCount": 0,
+      "tapKeyCount": 0
+    }
+  ],
+  "paragraphJournal": [
+    {
+      "slotId": 1,
+      "word": "testing",
+      "charCount": 8
+    },
+    {
+      "slotId": 2,
+      "word": "my",
+      "charCount": 3
+    },
+    {
+      "slotId": 3,
+      "word": "keyboard",
+      "charCount": 9
+    },
+    {
+      "slotId": 4,
+      "word": "ignore",
+      "charCount": 7
+    },
+    {
+      "slotId": 5,
+      "word": "gibberish",
+      "charCount": 10
+    },
+    {
+      "slotId": 6,
+      "word": "m",
+      "charCount": 2
+    },
+    {
+      "slotId": 7,
+      "word": "pg",
+      "charCount": 3
+    },
+    {
+      "slotId": 8,
+      "word": "e",
+      "charCount": 2
+    },
+    {
+      "slotId": 9,
+      "word": "t",
+      "charCount": 2
+    },
+    {
+      "slotId": 10,
+      "word": "t",
+      "charCount": 2
+    },
+    {
+      "slotId": 11,
+      "word": "t",
+      "charCount": 2
+    }
+  ],
+  "liveImeSession": {
+    "sessionGeneration": 58,
+    "wordsCommitted": 11,
+    "journalUsedChars": 50,
+    "journalMaxChars": 3000,
+    "journalWordCount": 11,
+    "lastSlotId": 11,
+    "lastWord": "t",
+    "lastHostPackage": "com.run.tower.defense"
+  }
+}

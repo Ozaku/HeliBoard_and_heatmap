@@ -128,6 +128,8 @@ class SingleDictionaryFacilitator(private val dict: Dictionary) : DictionaryFaci
 
     override fun isValidSuggestionWord(word: String) = isValidSpellingWord(word)
 
+    override fun getMainDictionary(): Dictionary = dict
+
     override fun removeWord(word: String) {}
 
     override fun clearUserHistoryDictionary(context: Context) {}

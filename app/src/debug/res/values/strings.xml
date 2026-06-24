@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
     SPDX-License-Identifier: GPL-3.0-only
+    ai-note: debug build only — distinct from store HeliBoard (helium314.keyboard)
+    Package id: helium314.keyboard.debug (see applicationIdSuffix in build.gradle.kts)
 -->
 <resources>
-    <string name="english_ime_name" translatable="false">HeliBoard debug</string>
-    <string name="spell_checker_service_name" translatable="false">HeliBoard debug Spell Checker</string>
-    <string name="ime_settings" translatable="false">HeliBoard debug Settings</string>
-
+    <string name="english_ime_name" translatable="false">Heatmap KB (beta)</string>
+    <string name="spell_checker_service_name" translatable="false">Heatmap KB Spell Check (beta)</string>
+    <string name="ime_settings" translatable="false">Heatmap KB Settings</string>
 </resources>

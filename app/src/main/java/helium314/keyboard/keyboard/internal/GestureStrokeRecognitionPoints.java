@@ -101,6 +101,15 @@ public final class GestureStrokeRecognitionPoints {
         return mEventTimes.getLength();
     }
 
+    /** ai-note: Block 3 step 13a — heatmap tap/swipe gate reads stroke endpoints */
+    public int getX(final int index) {
+        return mXCoordinates.get(index);
+    }
+
+    public int getY(final int index) {
+        return mYCoordinates.get(index);
+    }
+
     // TODO: Make this package private
     public void addDownEventPoint(final int x, final int y, final int elapsedTimeSinceFirstDown,
             final int elapsedTimeSinceLastTyping) {

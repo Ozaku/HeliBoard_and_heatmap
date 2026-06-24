@@ -1,0 +1,35 @@
+DESIGN — Block 2 step 12: conservative correction weights
+================================================================================
+Beta target: 0.0.0.22 | ROADMAP_STEP 12 | DB schema v4 (additive)
+Cross-ref: 44_DESIGN_block3_swipe_letter_weight_and_beat_v1.txt, 45_DESIGN_block2_step11_granular_reset_v1.txt
+
+GOAL
+  When typed_text != committed_text at commit time, bump personal correction weights.
+  No autocorrect mutation yet — store only. Tap/swipe segregated by input_mode.
+
+SIGNAL (v1)
+  Commit-time HeliBoard autocorrect delta only (typed != committed).
+  Strip picks + paragraph retroactive corrections → Block 4 step 20.
+
+DB v4 TABLES
+  heatmap_letter_confusion — per-letter from→to at position band (FIRST/MIDDLE/LAST)
+  heatmap_word_correction — whole-word typed→committed pattern
+
+WEIGHT RULES (conservative)
+  Letter band increment: FIRST +1, LAST +2, MIDDLE +3 (middle learns faster per 44_)
+  Letter weight_sum cap: 100 per row
+  Word weight_sum increment: +1, cap 50
+  Decay: if last_seen > 30 days, weight_sum = weight_sum * 9 / 10 before bump
+
+RESET
+  "Reset typo weights" clears letter_confusion + word_correction (Block 6 naughty list later)
+
+NOT YET
+  Applying weights during decode (Block 4). AC (Block 5).
+
+VERIFY
+  1. Type typo, accept autocorrect → export shows wordCorrectionRows / letterConfusionRows > 0
+  2. Reset typo weights → rows 0, commits unchanged
+  3. Same typo again → counts increment (capped)
+
+NEXT: Block 3 step 13a tap/swipe gate + literal decode

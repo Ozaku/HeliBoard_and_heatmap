@@ -1,0 +1,88 @@
+﻿{
+  "schemaVersion": 1,
+  "exportedAtMs": 1781300430024,
+  "exportSource": "ime_commit",
+  "build": {
+    "beta": "0.0.0.29",
+    "roadmapStep": 15,
+    "statusLine": "Heatmap learning beta 0.0.0.29 (roadmap step 15)"
+  },
+  "settings": {
+    "learningEnabled": true,
+    "paragraphWindowChars": 3000,
+    "tapHeatmapAutocorrect": true,
+    "swipeHeatmapAutocorrect": true,
+    "autoFileDump": false
+  },
+  "instrumentation": {
+    "lifetimeCommits": 548,
+    "lastFlushReason": "HOST_CHANGED",
+    "lastFlushHost": "com.google.android.googlequicksearchbox",
+    "totalFlushes": 175,
+    "selectionEditEvents": 249,
+    "pendingFinalTextSync": 18,
+    "lastFieldProbe": "skip=no_connection",
+    "snapshotBeta": "0.0.0.29",
+    "snapshotJournalChars": 3,
+    "snapshotJournalWords": 1,
+    "snapshotLastWord": "Hey",
+    "snapshotHostPackage": "com.google.android.googlequicksearchbox"
+  },
+  "metrics": {
+    "commitCount": 547,
+    "commitLastMs": 69,
+    "commitAvgMs": 53,
+    "commitMaxMs": 101,
+    "commitP95Ms": 73,
+    "heapUsedMbAtFlush": 6,
+    "heapMaxMbAtFlush": 256,
+    "prefixBranchStubCount": 0
+  },
+  "learningStore": {
+    "schemaVersion": 4,
+    "dbPath": "\/data\/user\/0\/helium314.keyboard.debug\/files\/heatmap_learning\/heatmap_store.db",
+    "persistedCommitCount": 548,
+    "keyStatRows": 41,
+    "wordPairRows": 456,
+    "layoutHash": "lh_efffa97086f33f4d8af32aa512eff7cf96d242b177cc64fe9aae0b391aeff3ff",
+    "localeTag": "en-US",
+    "keyBoundsRows": 26,
+    "pathBucketRows": 65,
+    "alignmentOffsetRows": 24,
+    "letterConfusionRows": 22,
+    "wordCorrectionRows": 19
+  },
+  "wordSessions": [
+    {
+      "slotId": 1,
+      "sessionGeneration": 2,
+      "hostPackage": "com.google.android.googlequicksearchbox",
+      "inputMode": "SWIPE",
+      "commitType": "USER_TYPED",
+      "committedText": "Hey",
+      "finalText": "Hey",
+      "typedText": "Hey",
+      "separatorCharCount": 0,
+      "committedAtMs": 1781300429994,
+      "swipeTracePointCount": 22,
+      "tapKeyCount": 0
+    }
+  ],
+  "paragraphJournal": [
+    {
+      "slotId": 1,
+      "word": "Hey",
+      "charCount": 3
+    }
+  ],
+  "liveImeSession": {
+    "sessionGeneration": 2,
+    "wordsCommitted": 1,
+    "journalUsedChars": 3,
+    "journalMaxChars": 3000,
+    "journalWordCount": 1,
+    "lastSlotId": 1,
+    "lastWord": "Hey",
+    "lastHostPackage": "com.google.android.googlequicksearchbox"
+  }
+}

@@ -1,0 +1,117 @@
+================================================================================
+PLANNING LOCKDOWN v3 — start-to-finish (pre-code)
+Status: Planning phase nearly complete. Next step = Phase 1 instrumentation (code).
+Human feedback: Composer_Suggestions.txt (# lines) + 23_MAINTAINER_FEEDBACK_RESOLVED_v3.txt
+================================================================================
+
+--------------------------------------------------------------------------------
+ONE-SENTENCE PRODUCT
+--------------------------------------------------------------------------------
+A HeliBoard fork whose swipe path decodes letters literally against any installed
+dictionary, learns from corrections stored in a multi-paragraph heatmap (tap and
+swipe separate), and stops offering chronic mistakes via the Common Typo List —
+without cloud AI or proprietary swipe libraries.
+
+--------------------------------------------------------------------------------
+NON-GOALS
+--------------------------------------------------------------------------------
+  - LLM / generative text / cloud training
+  - Proprietary swypelibs as end-state dependency
+  - Hardcoded marketing word lists in APK source
+  - Auto-picking "second best" whole word at swipe end (find/food hack)
+  - Overlapping invisible keys
+
+--------------------------------------------------------------------------------
+ARCHITECTURE LAYERS (bottom → top)
+--------------------------------------------------------------------------------
+
+L0  Keyboard coordinate map + layout hash (per locale)
+L1  Input capture: stroke points, tap keys, mode (swipe|tap), slotId
+L2  Literal segment decoder → prefix trie queries → runnerUps
+L3  Heatmap store: key, path signature, word-pair, alignment offsets
+L4  Weight application: biases during L2; word-level soft/hard suppress
+L5  Common Typo List + settings (Heatmap Smart Keyboard)
+L6  Optional invisible geometry (tap default on; swipe optional)
+L7  Diagnostics: live journal, JSON export, heatmap overlay, metrics (P4)
+
+--------------------------------------------------------------------------------
+PHASE 1 — INSTRUMENTATION (FIRST CODE — subdivided)
+--------------------------------------------------------------------------------
+1a  WordSlot + ParagraphRingBuffer (slider 500–3000 chars, snap 100)
+1b  WordSession record: swipe polyline simplified, tap sequence, runnerUps placeholder,
+     committed vs final text, slotId, mode switches
+1c  Correction detector on flush (send, blur, window slide) + retroactive edit in window
+1d  Session recording always on (core); settings toggle for file dump / JSON export (S3,S7)
+1e  Debug metrics: prefix branch count stub, latency hooks (P4)
+1f  Prove slot + journal on device; export sample for agent review
+
+Deliverable: keyboard behaves as today; data pipeline exists.
+
+--------------------------------------------------------------------------------
+PHASE 2 — HEATMAP PERSISTENCE
+--------------------------------------------------------------------------------
+2a  SQLite or binary store: key counters tap/swipe, confusion pairs, curve buckets
+2b  Coordinate-normalized path signatures + alignment offsets (finger vs key center)
+2c  Conservative weight updates from corrections (F5); weekly decay (P3 nuance)
+2d  Density-based Frequent Typo promotion rules (test on phone, starter thresholds in 23)
+
+--------------------------------------------------------------------------------
+PHASE 3 — SETTINGS + COMMON TYPO LIST
+--------------------------------------------------------------------------------
+3a  Settings category "Heatmap Smart Keyboard" (18_SETTINGS spec)
+3b  Common Typo List UI; tap-twice escape; swipe→tap gentle mode (13_FEATURE v2)
+3c  Function-word guard list (the, and, of, …) — NOT length-based immunity
+3d  Heatmap debug overlay (F4)
+
+--------------------------------------------------------------------------------
+PHASE 4 — LITERAL SWIPE ENGINE
+--------------------------------------------------------------------------------
+4a  Segment inference + trie narrowing (20 v3, NEXT + STARTING examples)
+4b  Row/region rules; per-segment confidence; runnerUp strip population
+4c  Commit top word on lift; strip learning on alternate pick
+4d  Replace reliance on null gesture policy / proximity soup over time
+4e  Regression via recorded strokes + installed dict only (S7)
+
+Sub-phases 4a→4e can ship behind developer toggle until stable.
+
+--------------------------------------------------------------------------------
+PHASE 5 — GEOMETRY (optional toggles)
+--------------------------------------------------------------------------------
+5a  Tap hit-box adjust (default on): 80% min, grow to neighbor gap, no overlap
+5b  Swipe hit-box adjust (default off): bias-first per user preference
+5c  fam/fan style drift via training (P3 example)
+
+--------------------------------------------------------------------------------
+PHASE 6 — POST-V1
+--------------------------------------------------------------------------------
+  Export/import learning backup (F3)
+  Spell checker shared DB (F7) if cheap
+  Optional tiny classifier picking among existing candidates only
+
+--------------------------------------------------------------------------------
+DOCUMENT READ ORDER (agents)
+--------------------------------------------------------------------------------
+  1. 22_PLANNING_LOCKDOWN_v3.txt (this file)
+  2. 23_MAINTAINER_FEEDBACK_RESOLVED_v3.txt
+  3. 20_FEATURE_literal_swipe_dictionary_narrowing_v3.txt
+  4. 13_FEATURE_common_typo_list_v2.txt + 18_SETTINGS_MENU_SPEC_v2.txt
+  5. 19_PERFORMANCE_AND_MEMORY_v2.txt
+  6. Composer_Suggestions.txt (human # notes preserved)
+  7. 01–07 *.md for HeliBoard codebase map
+
+--------------------------------------------------------------------------------
+PLANNING EXIT CRITERIA (ready for code)
+--------------------------------------------------------------------------------
+  [x] Swipe decode philosophy locked (per-key path, not word guess)
+  [x] Commit + strip behavior locked
+  [x] Slot + paragraph journal locked
+  [x] Common Typo List rules locked (pending threshold tuning on device)
+  [x] Key geometry limits locked (80% floor, no overlap)
+  [x] Build order + sub-phases defined
+  [ ] Optional: maintainer signs off on Phase 1a scope in next message
+
+When [ ] is checked, begin Phase 1a in app/ (versioned files per user rule).
+
+================================================================================
+END PLANNING LOCKDOWN v3
+================================================================================

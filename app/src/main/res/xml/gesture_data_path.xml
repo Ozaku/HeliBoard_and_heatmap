@@ -3,4 +3,7 @@
     <files-path
         name="gesture_data_directory"
         path="gesture_data"/>
+    <files-path
+        name="heatmap_learning_directory"
+        path="heatmap_learning"/>
 </paths>

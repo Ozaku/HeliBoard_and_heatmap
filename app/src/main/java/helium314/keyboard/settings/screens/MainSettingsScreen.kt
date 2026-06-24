@@ -42,6 +42,7 @@ fun MainSettingsScreen(
     onClickLanguage: () -> Unit,
     onClickLayouts: () -> Unit,
     onClickDictionaries: () -> Unit,
+    onClickHeatmapSmartKeyboard: () -> Unit,
     onClickBack: () -> Unit,
 ) {
     SearchSettingsScreen(
@@ -94,6 +95,12 @@ fun MainSettingsScreen(
                     icon = R.drawable.ic_settings_correction
                 ) { NextScreenIcon() }
                 Preference(
+                    name = stringResource(R.string.heatmap_smart_keyboard_title),
+                    description = stringResource(R.string.heatmap_smart_keyboard_summary),
+                    onClick = onClickHeatmapSmartKeyboard,
+                    icon = R.drawable.ic_settings_correction
+                ) { NextScreenIcon() }
+                Preference(
                     name = stringResource(R.string.settings_screen_secondary_layouts),
                     onClick = onClickLayouts,
                     icon = R.drawable.ic_ime_switcher
@@ -124,7 +131,7 @@ private fun PreviewScreen() {
     initPreview(LocalContext.current)
     Theme(previewDark) {
         Surface {
-            MainSettingsScreen({}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {})
+            MainSettingsScreen({}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {})
         }
     }
 }

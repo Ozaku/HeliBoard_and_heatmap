@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- ai-note: Heatmap Smart Keyboard settings strings -->
+<resources>
+    <string name="heatmap_smart_keyboard_title" translatable="false">Heatmap Smart Keyboard</string>
+    <string name="heatmap_smart_keyboard_summary" translatable="false">Swipe learning, word slots, and correction memory (beta)</string>
+    <string name="heatmap_learning_enabled_title" translatable="false">Enable learning</string>
+    <string name="heatmap_learning_enabled_summary" translatable="false">Record typing patterns for swipe accuracy and heatmap training</string>
+    <string name="heatmap_paragraph_window_title" translatable="false">Correction memory window</string>
+    <string name="heatmap_paragraph_window_summary" translatable="false">How much recent text is kept for learning (characters)</string>
+    <string name="heatmap_status_title" translatable="false">Instrumentation status</string>
+    <string name="heatmap_privacy_note" translatable="false">Learning data stays on this device. Nothing is uploaded or sold. Password fields, private/incognito fields (no-personalized-learning), and email fields are never recorded.</string>
+    <string name="heatmap_autocorrect_section" translatable="false">Autocorrect (per input mode)</string>
+    <string name="heatmap_tap_autocorrect_title" translatable="false">Heatmap autocorrect for tap typing</string>
+    <string name="heatmap_tap_autocorrect_summary" translatable="false">Off: HeliBoard Text correction and autocorrect behave as usual for tapped words. On: Heatmap System-2 may change committed tap words when implemented (learning always on if enabled above).</string>
+    <string name="heatmap_swipe_autocorrect_title" translatable="false">Heatmap autocorrect for swipe typing</string>
+    <string name="heatmap_swipe_autocorrect_summary" translatable="false">Off: HeliBoard glide autocorrect unchanged for swiped words. On: Heatmap System-2 may change committed swipe words when implemented. Use tap off + swipe on to learn from taps but only autocorrect swipes.</string>
+    <string name="heatmap_swipe_typing_title" translatable="false">Heatmap swipe typing (beta)</string>
+    <string name="heatmap_swipe_typing_summary" translatable="false">ON: swipe words from stroke geometry + your dictionaries (no external glide library needed). OFF: use HeliBoard legacy glide if a gesture library is installed. Minimum swipe distance gate is always active.</string>
+    <string name="heatmap_swipe_typing_blocked_summary" translatable="false">Disabled while a user-imported libjni_latinime.so is loaded. Remove that library to use Heatmap swipe typing.</string>
+    <string name="heatmap_diagnostics_section" translatable="false">Diagnostics &amp; export</string>
+    <string name="heatmap_auto_file_dump_title" translatable="false">Auto-save JSON on flush</string>
+    <string name="heatmap_auto_file_dump_summary" translatable="false">When on, keeps timestamped session_export_*.json files (up to 12) on field blur, send, app switch, etc. Latest file always updates on each word commit.</string>
+    <string name="heatmap_export_json_title" translatable="false">Save session export to device</string>
+    <string name="heatmap_export_json_summary" translatable="false">Opens the system file picker (My Files, Downloads, etc.) to save a .json snapshot. Not the share sheet — use this when the phone is tethered to a PC. Type in another app first if empty.</string>
+    <string name="heatmap_export_failed" translatable="false">Could not save export. Type a few words with learning on, then try again.</string>
+    <string name="heatmap_export_saved" translatable="false">Session export saved.</string>
+    <string name="heatmap_reset_section" translatable="false">Learning data</string>
+    <string name="heatmap_reset_swipe_path_title" translatable="false">Reset swipe path biases</string>
+    <string name="heatmap_reset_swipe_path_summary" translatable="false">Clears curve/path signature buckets and swipe alignment offsets. Word commits, tap stats, and key bounds are kept.</string>
+    <string name="heatmap_reset_swipe_path_confirm_title" translatable="false">Reset swipe path data?</string>
+    <string name="heatmap_reset_swipe_path_confirm_message" translatable="false">Deletes stored swipe curve buckets and swipe-only finger-alignment offsets. Your committed-word history and tap learning stay intact.</string>
+    <string name="heatmap_reset_swipe_path_done" translatable="false">Swipe path biases were cleared.</string>
+    <string name="heatmap_reset_geometry_title" translatable="false">Reset key geometry</string>
+    <string name="heatmap_reset_geometry_summary" translatable="false">Clears per-layout key bounds and alignment offsets (tap and swipe). Commits and path buckets are kept.</string>
+    <string name="heatmap_reset_geometry_confirm_title" translatable="false">Reset key geometry?</string>
+    <string name="heatmap_reset_geometry_confirm_message" translatable="false">Deletes stored key bounds and all alignment offsets. The keyboard will re-measure layout geometry on the next commits.</string>
+    <string name="heatmap_reset_geometry_done" translatable="false">Key geometry data was cleared.</string>
+    <string name="heatmap_reset_typo_weights_title" translatable="false">Reset typo weights</string>
+    <string name="heatmap_reset_typo_weights_summary" translatable="false">Clears learned letter-confusion and word-correction weights from your autocorrect fixes. Commits and key seen-counts are kept. Common Typo List (Block 6) will use this button too.</string>
+    <string name="heatmap_reset_typo_weights_confirm_title" translatable="false">Reset typo weights?</string>
+    <string name="heatmap_reset_typo_weights_confirm_message" translatable="false">Deletes stored letter-confusion pairs and whole-word correction patterns learned from typed≠committed commits. Your word history and tap key stats stay intact.</string>
+    <string name="heatmap_reset_typo_weights_done" translatable="false">Typo and correction weights were cleared.</string>
+    <string name="heatmap_reset_learning_title" translatable="false">Reset all learning</string>
+    <string name="heatmap_reset_learning_summary" translatable="false">Deletes heatmap database, session exports, and all on-device training counters. Your toggles and slider settings stay as they are. The keyboard must re-learn from your typing.</string>
+    <string name="heatmap_reset_confirm_title" translatable="false">Delete ALL training data?</string>
+    <string name="heatmap_reset_confirm_message" translatable="false">Are you 100% SURE? This will delete ALL training data, and your keyboard will be reset to a new state. It will have to completely re-train on your typing habits!</string>
+    <string name="heatmap_reset_confirm_yes" translatable="false">Yes</string>
+    <string name="heatmap_reset_confirm_yes_countdown" translatable="false">Yes (%1$d)</string>
+    <string name="heatmap_reset_confirm_no" translatable="false">NO!!</string>
+    <string name="heatmap_reset_done" translatable="false">All heatmap learning data was deleted.</string>
+    <string name="heatmap_reset_failed" translatable="false">Could not reset learning data. Try again.</string>
+</resources>

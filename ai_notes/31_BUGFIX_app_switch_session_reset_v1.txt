@@ -1,0 +1,50 @@
+================================================================================
+
+BUG: Data collection works in app A, fails in app B, works again in app A
+
+================================================================================
+
+
+
+SYMPTOM
+
+  First external app: instrumentation OK. Second app: appears dead. Back to first: OK again.
+
+
+
+ROOT CAUSE
+
+  Session reset only ran when LatinIME isDifferentTextField was true. On some devices/OEMs,
+
+  switching between apps can deliver onStartInputView(..., restarting=true) with the same
+
+  inputType, so isDifferentTextField=false. Stale WordSlot/composing state from app A then
+
+  breaks recording in app B. Returning to A often triggers a proper reset again.
+
+
+
+FIX (beta 0.0.0.8)
+
+  HeatmapWordSlotSession_v4.onInputViewStarted: reset when host package changes OR
+
+  isDifferentTextField. Track last host key (null package → <unknown-host>).
+
+  Snapshot shows Host app: on last commit. Logcat includes host= in commit line.
+
+
+
+RETEST
+
+  Type in app A → app B → app A. Lifetime commits increases in all three.
+
+  Host app: in status should match the app you last typed in.
+
+
+
+================================================================================
+
+END
+
+================================================================================
+

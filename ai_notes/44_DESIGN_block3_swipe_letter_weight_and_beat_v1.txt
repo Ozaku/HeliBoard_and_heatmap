@@ -1,0 +1,82 @@
+DESIGN — Block 3 literal swipe: letter weight hierarchy + swipe beat
+================================================================================
+LOCKED (maintainer 2026-06) — applies to steps 13–15 decode + step 12 learning bias
+Cross-ref: 20_FEATURE_literal_swipe_dictionary_narrowing_v3.txt, 41_BLOCK3_swipe_single_letter_ban_v1.txt
+
+PROBLEM CLASS
+  Legacy keyboards overweight corpus typos + proximity neighbors. User can start on
+  correct letter yet get unrelated words (e.g. knowledge → bootlegger). Middle letters
+  on fast swipes are often missed; last letter is often overshot. Straight-line
+  perfection must NOT be required.
+
+--------------------------------------------------------------------------------
+LETTER POSITION WEIGHTS (per candidate word vs inferred path)
+--------------------------------------------------------------------------------
+  Rank (strict → loose):
+    1. FIRST letter — strongest. Must match stroke START key region (anchor).
+    2. MIDDLE letters — loosest; weight decreases as word length grows.
+       Longer words tolerate more middle near-miss / skip.
+    3. LAST letter — moderate (NOT second-strongest). Often passed slightly or
+       only grazed; less strict than first, more strict than middle bulk.
+
+  Scoring sketch (implementation in Block 3):
+    w_first  = 1.00
+    w_last   = 0.55   // tunable; below first, above middle average
+    w_middle = 0.25 / (1 + 0.15 * (wordLen - 3))  // softer for longer words
+
+  Keys-crossed rule stays: every letter in path must be *plausible* from geometry,
+  but middle slots accept heatmap-biased alternates when trie still has prefixes.
+
+--------------------------------------------------------------------------------
+SWIPE BEAT (segment count = letter count driver)
+--------------------------------------------------------------------------------
+  Human swipes are a series of direction changes, not one straight line.
+
+  BEAT RULE: Each sharp direction change on the polyline opens a new segment and
+  implies one letter hypothesis for that beat.
+
+  Example beat pattern (4 beats → target ~4 letters):
+    start key → swipe to 2nd region → CHANGE DIR → 3rd region → CHANGE DIR → 4th
+
+  Do NOT infer 5 letters from 4 beats or 3 letters from 4 beats without strong
+  dictionary tie-break — beat count sets expected length band before trie narrowing.
+
+  Corner detection: reuse segment inference (step 13); angle threshold TBD on device.
+
+--------------------------------------------------------------------------------
+CANONICAL EXAMPLE — "compass" (fast, messy, realistic)
+--------------------------------------------------------------------------------
+  Approx path (maintainer):
+    c → (cross V,G,H,B) → o → CHANGE DIR → (cross K) → (gap N,M) → CHANGE DIR
+    → (sweep bottom↔middle rows, sloppy overlap) → a → s → d
+
+  Decode intent:
+    - Anchor C at start — hard requirement.
+    - Beat/segment count ~7 regions → expect ~7 letter slots; trie narrows to
+      words matching C... matching end near D (soft).
+    - Middle (m,p,a,s) — low per-letter penalty for near keys / skipped letters.
+    - End S/D — moderate; user may overshoot past S; still prefer compass family.
+    - NOT bootlegger: no B anchor, path never supports B-leading words.
+
+--------------------------------------------------------------------------------
+MINIMUM SWIPE DISTANCE (step 13a — tap false-positive guard)
+--------------------------------------------------------------------------------
+  Not a swipe unless horizontal span ≥ start-key width OR vertical span ≥ start-key
+  height (per HeatmapCoordinateMap_v1 bounds). Micro-drag on single key = TAP.
+
+--------------------------------------------------------------------------------
+LEARNING (Block 2 step 12 + Block 4)
+--------------------------------------------------------------------------------
+  - Train on corrections + strip picks, not raw bad commits.
+  - Middle-letter confusion pairs update faster than first-letter pairs.
+  - Path signature buckets (step 10) keyed by beat-normalized polyline.
+  - User slow-retrain over sessions; decay stale habits (23_MAINTAINER P3).
+
+--------------------------------------------------------------------------------
+ANTI-PATTERNS (reject)
+--------------------------------------------------------------------------------
+  - Whole-word #2 swap at commit from global typo stats.
+  - Requiring last letter hard match when stroke only grazed end region.
+  - Treating perfect polyline overlap as prerequisite for match.
+
+NEXT CODE: Block 3 step 13a tap/swipe gate, 13b segment+beat inference with weights

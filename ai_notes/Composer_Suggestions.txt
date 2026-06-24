@@ -1,0 +1,342 @@
+================================================================================
+COMPOSER SUGGESTIONS
+Heatmap Smart Keyboard / HeliBoard_and_heatmap planning
+Compiled for maintainer reading — next session handoff
+No code in this document; recommendations and open decisions only
+================================================================================
+
+HOW TO USE THIS FILE
+  Read top to bottom once for the big picture, then revisit sections when we start
+  instrumentation, heatmap, Common Typo List, or the literal swipe engine.
+  Deeper specs live in other ai_notes files (see bottom). This file explains WHY
+  each suggestion exists in plain language.
+#note: A human added feedback on this! Every line starting with a # character is a note written by me!
+
+--------------------------------------------------------------------------------
+SECTION A — CORE ENGINEERING SUGGESTIONS (S1–S8)
+--------------------------------------------------------------------------------
+
+S1. Word slot ID
+--------------------------------------------------------------------------------
+WHAT:
+  Assign every word the user is composing a unique "slot" number for that keyboard
+  session (Word 1, Word 2, Word 3…). Rules like "tap the same word twice to allow
+  it" and "after deleting a swipe mistake, be gentle with autocorrect" apply only
+  to the current slot, not the next word.
+  #Human-added note: a user tapping out a word after a swipe got it incorrect is the signal to be gentle with autocorrect for the word in that position (even if it changes again). If a user doesn't switch from swiping to tapping, then autocorrect should function normally.
+
+WHY:
+  Without slot IDs, the keyboard might think you "meant" a typo in a new word
+  because you insisted on it earlier, or keep autocorrect off too long. Per-word
+  isolation keeps swipe history, tap retries, and Common Typo List logic accurate.
+  #human-added note: Yes! Slot IDs sound very useful, and I would be happy to accept this suggestion and implement it into the design! The system NEEDS a way to track a bunch of words going back up to several paragraphs. This is functionally neccessary if anything.
+
+WHEN:
+  Build this in Phase 1 (instrumentation) — it is foundational for everything else.
+#Human note: This sounds like a perfect way to implement exactly what I wanted! Thank you for the suggestion, Composer 2.5! I agree that we should implement this early, with instrumentation in early versions to dump data proving it works.
+--------------------------------------------------------------------------------
+
+S2. Confidence gate before auto-committing a swipe word
+--------------------------------------------------------------------------------
+WHAT:
+  When the finger lifts, if the best dictionary match is only slightly better than
+  the second-best (small score gap), do NOT silently commit the top word. Show
+  alternatives in the suggestion strip and let the user confirm or ignore.
+
+WHY:
+  While the literal engine and heatmap are still learning, near-ties like
+  "starting" vs "starring" will happen. Auto-committing every near-tie trains the
+  wrong lesson and frustrates the user. A margin gate reduces wrong commits early;
+  you can loosen the gate as accuracy improves.
+
+WHEN:
+  Phase 4 (literal swipe engine) and keep enabled until metrics show few near-tie
+  mistakes on your test phrase set.
+
+#Human note: There are several things I want to change here. First, it should act the same here. The best dictionary match will gradually get pushed more toward an accurate direction, because the user's typing pattern will slowly alter the keyboard's function. Frequently hitting the space between I and O when the user does a diagonal UP-RIGHT movement during a swipe from the F key and intends to hit I will cause a bias toward the I key in that type of swipe. [find - food discrepancy] For example, if the user commonly has "food" as the most common match when they backspace and replace it with "find", this would seem like a good fix at first because it would snap to that second-most likely scenario, BUT that's not how we should approach this. Snapping to the second-best dictionary match automatically will eventually hit a wall with how much it can help. Gradually the swipe heatmap training will adjust the precision to a place where the "most likely" dictionary match will actually match what the user wanted to type most of the time. 
+
+#Another human note: regarding the "find/food" discrepancy, it was another example of how most keyboards function in a way that does not favor accuracy. Every modern Android keyboard I've tried (which includes all of the biggest brands like Google and Microsoft and Samsung) has failed tremendously in accuracy with swipe typing for the past decade. Accuracy and precision with high speed typing are our number one goals here. If you look at any phone keyboard, you'll see the N key is on the bottom row, so if the user goes to the bottom row AT ALL with a swipe, then it SHOULD have a bottom row character in it. The fact that modern phone keyboards can type "food" when I clearly swiped a sharp angle into the N key demonstrates that this accuracy is not possible with whatever hack-job guessing method they use. 
+
+#Instead of using predictive algorithms to guess what the user meant, we are training the keyboard itself to understand the user's movements as actual key data from the beginning, and improve that data accuracy over time. This goes back to an explanation I gave in a different document, the feature list, where I describe a specific swiped word and how it would functionally process through the keyboard. I'll give another, shorter example here: starting on N key > narrow dictionary search to N words, leave BHJM words in search with reduced confidence. swipe goes in a straight line from N key to bottom-right corner of W key > no "NW,BW,HW,JW,MW" words in dictionary, missed vowel possible, assume "NE" > refine dictionary search to "NE" with high confidence, "BE,HE,JE,ME" with lower confidence. swipe continues to space between X and C keys > refine search to "NEX,NEC" and "BEC,HEC,MEC,MEX,HEX" with lower confidence > "JEC,JEX,BEX" returned no dictionary results. swipe continues to T > "NEXT" is most likely based on swipe and dictionary search. swipe ends > "NEXT" entered in text field. (I don't believe there would be many other high confidence results by this point, but "BECAUSE,HECTIC,MECHANIC,MEXICO" would have come up in the previous step and been discarded because the swipe was 4 characters long.)
+
+#So there is a confidence score, but we use it to determine what keys the user is trying to press instead of trying to guess a whole word at once with it. Instead of using the confidence score right out of the gate with the whole word, it starts at a base state and gradually builds confidence in specific directions based on the user's history with correcting words and the swipe patterns those were input with. 
+
+--------------------------------------------------------------------------------
+
+S3. Structured debug export for AI / self review
+--------------------------------------------------------------------------------
+WHAT:
+  A developer-oriented setting (under Heatmap Smart Keyboard) exports recent
+  sessions as JSON, for example:
+    - simplified swipe points
+    - runner-up (almost-match) words
+    - what was committed vs what the user changed it to
+    - per-letter correction hints
+  Optional: include paragraph text only if user opts in (privacy).
+
+WHY:
+  You said you want to test on a phone and bring data back to discuss with an AI
+  agent. Structured logs beat screenshots. Agents can spot systematic failures
+  (e.g. always confusing G/H on a curve) without guessing.
+
+WHEN:
+  Phase 1 — even before decode changes, export raw journal events.
+
+#human response: Yes, absolutely! Make it as robust as you'll need it to be, we can honestly leave it in as a diagnostic feature even at the end of the project. It will be useful the entire time, because you'll be able to make more sense of the info that I can. 
+--------------------------------------------------------------------------------
+
+S4. Cap prefix branching during dictionary narrowing
+--------------------------------------------------------------------------------
+WHAT:
+  After each swipe segment, limit how many dictionary prefixes stay "active" (e.g.
+  top 200 by language-model frequency). Never materialize every word starting with
+  "s" into memory.
+
+WHY:
+  Your STARTING walkthrough begins with a huge "s*" set. That is correct logically
+  but dangerous if implemented naively in Java. The trie on disk can answer prefix
+  queries; we must not copy the whole branch into RAM. A hard cap keeps memory and
+  CPU stable on low-end phones.
+
+WHEN:
+  Phase 4 literal engine — design from day one; expose cap in developer settings
+  for tuning.
+
+RELATED:
+  See 19_PERFORMANCE_AND_MEMORY_v2.txt (dictionary mmap, not full RAM load).
+
+#Human response: You seem to know more about this particular area than I do. I'll trust your judgement based on what you've said here. 
+--------------------------------------------------------------------------------
+
+S5. Personal curve template library (how "loops" get good over time)
+--------------------------------------------------------------------------------
+WHAT:
+  Store compact "curve signatures" (short hashes of bend shape + keyboard region).
+  When the user corrects a swipe, link signature → intended letters/word. After
+  enough examples (~50+ corrections involving curves, rule of thumb), prefer letters
+  that historically fixed that shape for THIS user.
+
+WHY:
+  Loops and gradual curves are the hardest part of literal decoding. Geometry alone
+  cannot know if a bend meant one letter or two. Your own corrections are the
+  ground truth. This is classical on-device learning (counts/clusters), not AI
+  text generation.
+
+WHEN:
+  Phase 2–3 (heatmap/weights); improves Phase 4 curve disambiguation continuously.
+
+RELATED:
+  17_USER_DECISIONS_AND_GLOSSARY_v2.txt ("loops" explained).
+
+#Human response: Not only the geometry, but it's coordinates. We will need to map the full QWERTY keyboard to the swipe area based on coordinates. Basically, the keyboard needs to know where every part of the swipe area correlates with the visible keys, as well as the fine tuned adjustments that can invisibly change the size or location of frequently missed keys (in order to shift them toward where the user actually touches)
+--------------------------------------------------------------------------------
+
+S6. "Add to dictionary?" — never auto-add after swipe-delete-tap
+--------------------------------------------------------------------------------
+WHAT:
+  When the user deletes a bad swipe word and tap-types something that does not match
+  any runner-up (almost-match), treat it as a possible NEW word. Offer a one-time
+  prompt: "Add [word] to dictionary?" Do not silently add to user dictionary.
+
+WHY:
+  Auto-add would store typos and noise permanently. The whole project pushes
+  learning from corrections; adding words should be explicit user consent.
+
+WHEN:
+  Phase 3+ (Common Typo List and tap-after-swipe matcher).
+#Human response: This section is correct, that is exactly right. 
+--------------------------------------------------------------------------------
+
+S7. Regression test swipe fixtures
+--------------------------------------------------------------------------------
+WHAT:
+  Keep a file such as assets/test_swipes.txt with recorded polylines (or synthetic
+  coordinates) for test words: PAUSE, PHASE, PLASTIC, STARTING, plus your real
+  failure cases from the phone.
+
+WHY:
+  Every code change to decode can be re-run on the same strokes before installing
+  on a device. Agents and humans share one reproducible baseline.
+
+WHEN:
+  Before Phase 4 merges; grow the list whenever the phone finds a new failure.
+
+#Human response: I intend to test with a standard keyboard dictionary installed, since this software already includes compatibility with them. It may be a dictionary only used for tapping, but it still contains a word list that the keyboard software can read. We don't need to program specific words anywhere in here, that type of practice can lead to confusion and junk code left in the software. You're right about the test swipes, we absolutely need swipe data to be recorded. As a matter of fact, it's going to be a core function so let's build it like one and then just add an option to dump the user's keyboard use data into a file. 
+--------------------------------------------------------------------------------
+
+S8. Rename sweep when coding starts (Common Typo List)
+--------------------------------------------------------------------------------
+WHAT:
+  One pass through the codebase: user-visible strings say "Common Typo List";
+  internal class names use a consistent prefix (e.g. CommonTypo…). Remove
+  "Naughty List" from UI and comments so future agents are not confused.
+
+WHY:
+  Planning docs already renamed the feature; code should match before users see settings.
+
+WHEN:
+  First PR that touches settings or list storage — not necessarily Phase 1.
+#Human response: yes, you're right about that. We should rename it to "Common Typo List" or "CommonTypos" across the board, and stop using the "Naughty List" phrasing to prevent confusion.
+--------------------------------------------------------------------------------
+SECTION B — PERFORMANCE & STORAGE SUGGESTIONS (from performance planning)
+--------------------------------------------------------------------------------
+
+P1. Preload dictionary trie handle at keyboard open
+--------------------------------------------------------------------------------
+WHAT:
+  Open the main binary dictionary once when the IME starts, not on every key press.
+
+WHY:
+  Removes latency spikes at the start of a swipe and avoids repeated native open cost.
+#Human response: I'm not sure what "trie" means, but I can see the functional meaning and I agree with that. We don't need to look up the dictionary every time the user moves their finger during a swipe. I agree with your suggestion. 
+--------------------------------------------------------------------------------
+
+P2. Compress curve signatures for long-term storage
+--------------------------------------------------------------------------------
+WHAT:
+  Store curves as 16–32 byte hashes plus optional coarse polyline, not thousands of
+  raw (x,y,t) points per word forever.
+
+WHY:
+  Rich learning without ballooning SQLite/files. Alignment data (finger vs key center)
+  can be aggregated per hash bucket.
+#Human Response: You are completely correct about selecting the most efficient method here. Minimal storage size is always a good thing, and I'm not quite technically inclined enough to know what exact data would be getting hashed here, but if it conveys the same info of "this swipe shape means these specific letters, which points to this specific word" then it's the right choice. 
+--------------------------------------------------------------------------------
+
+P3. Weekly decay on weights
+--------------------------------------------------------------------------------
+WHAT:
+  Slowly reduce old biases (multiply by ~0.995 per week) so outdated habits fade, but
+  do not zero everything unless user taps "Clear all learning data."
+
+WHY:
+  Keyboard adapts when you change phones or typing style; prevents permanent wrong
+  lock-in from old typos while still honoring strong recent patterns.
+#Human response: There shouldn't be any real lock-in unless the user continues to correct one specific word to another specific word and just pushes the bias really strongly with repeated corrections. It's still not a full lock-in either, just a strong bias but not in the way of guessing words. It's a bias toward specific letters in that swipe pattern. The way to get the other word would be to swipe a slightly different but similar pattern which results in the old word again (because it's close enough, and resembles that word more than the previous swipe pattern), OR to correct the new "most confident word" back to the old word repeatedly. The user would already have methods of training the keyboard back to the original bias. 
+#I agree that there should be a decay on certain biases with training, but more in the direction of the following example. If a user frequently corrects "fan" to the slang "fam", then the keyboard would gradually learn that they mean to say "fam" with that swipe. If the user were to try typing "fan" at that point, they would likely shift the "N" portion of the swipe further to the left, possibly even touching the visible "B" key. That being the case, the keyboard should have also expanded the user's "M" key invisibly to the left a bit in order to facilitate the correct typing of "fam" already by the time the keyboard learns to type "fam" regularly. This would have also likely resulted in the N key getting pushed left a bit during training, so it's still there for the user to swipe over and get "fan". The only time the keyboard is going to override the actual key inputs of the swipe pattern is when a user has frequently corrected the specific keystrokes AND the matching swipe pattern to a different but highly similar word, in which case it will override it to autocorrect to that specific word. 
+--------------------------------------------------------------------------------
+
+P4. Instrumentation test plan before heavy decode
+--------------------------------------------------------------------------------
+WHAT:
+  On device, measure:
+    - prefix branch count per segment (watch for explosions)
+    - suggestion latency p50 / p95
+    - heap after 10 minutes of mixed swipe/tap
+  Log to debug export (S3).
+
+WHY:
+  Proves we stay far below gigabyte-scale memory and keep typing smooth.
+#Response: I agree completely, human approved. 
+--------------------------------------------------------------------------------
+SECTION C — MACHINE LEARNING WITHOUT "AI HALLUCINATION"
+--------------------------------------------------------------------------------
+
+WHAT WE RECOMMEND
+  Primary: weighted counts — key bias, word negative weight, wrong→right pair boosts,
+  curve bucket stats, swipe alignment offsets.
+  #Human note: and use human corrections to train this whole system. If "tye" is in no dictionaries, and always gets changed to "the" by the user (say like 5+ times a day for 3 days, or 20+ times in one day, or 15+ times in one hour, or 5+ times within 15 minutes.), then "tye" should be blasted with negative weight and sent to the "frequent typo list". Also, regarding alignment offsets, size increase should AT MAXIMUM fill the space between the key and it's surrounding keys, so NO OVERLAPS allowed. Regarding key size change again, this should be the less frequent option and should be limited to a MAXIMUM of 20% size reduction (leaving the key at 80% size at it's smallest possible result). For invisibly shifting the key position, it's edge probably should not pass it's original center point. Keys should also never be bigger than their original size plus the space surrounding them and immediately adjacent keys.
+
+  Optional later: a tiny on-device classifier that chooses among EXISTING candidates
+  (runner-ups + dictionary), trained only on your correction history.
+
+WHAT WE AVOID
+  LLMs, cloud inference, generative "guess the sentence," or inventing words that are
+  not in the installed dictionary / user dictionary / explicit new-word flow.
+
+WHY:
+  Matches your goal: the keyboard should converge toward getting swipes right because
+  it has seen your corrections thousands of times — not because a model imagined text.
+#Human response: it is highly important that we not only apply weight and bias to words, but also to the swipe pattern and resulting keystrokes. 
+--------------------------------------------------------------------------------
+SECTION D — BUILD ORDER (HYBRID SWIPE — NOT TWO KEYBOARDS)
+--------------------------------------------------------------------------------
+
+This is a process suggestion, not a feature toggle:
+
+  Step 1 — Instrument on phone (journal, runner-ups, corrections).
+  Step 2 — Heatmap + weights (tap and swipe separate).
+  Step 3 — Common Typo List + Heatmap Smart Keyboard settings.
+  Step 4 — Literal dictionary-narrowing swipe engine (your STARTING algorithm).
+  Step 5 — Optional invisible key resize toggles.
+
+"Hybrid" only means: during Step 1–2, legacy suggest may still run for comparison.
+End state: your engine + any installed .dict, no proprietary swipe library.
+
+Canonical algorithm: 20_FEATURE_literal_swipe_dictionary_narrowing_v2.txt
+#Response: The general idea sounds like it will work here. It might have to be divided into smaller steps at a time.
+--------------------------------------------------------------------------------
+SECTION E — SETTINGS UX SUGGESTIONS (already agreed + one open)
+--------------------------------------------------------------------------------
+
+E1. Single settings category: "Heatmap Smart Keyboard"
+  Groups learning toggle, sensitive-field learning (default OFF) with on-device-only
+  privacy text, paragraph slider 500–3000 (snap every 100, values between allowed),
+  Common Typo List screen, tap/swipe geometry toggles, clear/reset buttons.
+  See: 18_SETTINGS_MENU_SPEC_v2.txt
+
+E2. Swipe key hit-area adjustment — optional toggle (default OFF)
+  Swipe mode uses bias/heatmap first; resizing keys is for users who want it.
+
+E3. OPEN — Show runner-up words in strip always, or only when confidence is low?
+  Recommendation: only when uncertain (pairs with S2). Saves strip clutter when
+  decode is confident.
+  #user response: always place the most confident word in the text field at the end of a swipe, but leave runner-ups in the little suggestion bar, or whatever it's called. That way, the user can click one if it was correct, and the keyboard will learn from that swipe pattern and corrected word. This can still happen if the user goes back to the previous paragraph 1500 letters back and corrects a word, as long as it is still recent enough in the output text ("recent enough" should be several paragraphs back, and it's range adjustable by the slider we've discussed, which I pasted in the planned features list text file). 
+
+--------------------------------------------------------------------------------
+SECTION F — OPEN DECISIONS FOR YOU (not blocking, pick when ready)
+--------------------------------------------------------------------------------
+
+F1. Runner-up strip behavior (see E3).
+
+F2. Common Typo List auto-promotion thresholds
+  Draft: soft weight after 3 corrections in 7 days; hard list entry after 8 (or 5
+  deletes). Adjust after real-phone testing.
+  #User: we're likely going to need to test how many corrections should trigger a "common typo list" event multiple times, and add some additional conditions as we go. Some words should NEVER go to that list, such as "the, and, of, or, in, if, are" but we can't just automatically make a broad rule that "every 2-3 letter word is immune" because then we come back to the "tye/the" problem. This will take lots of work, and I'm always happy for suggestions that keep it totally free and open-source. 
+
+F3. Export / import learning backup
+  Useful when replacing phone; not required for v1. Could live under Advanced settings.
+#user: good idea, I like that suggestion as an added feature. Possibly even after the initial public release, because I would love to share this with everyone as quickly as possible once it's functioning well.
+
+F4. Visible heatmap debug overlay
+  Fun for power users; hide behind developer toggle so normal settings stay simple.
+#user: That does sound like a good feature, and it would confirm that the bias training is at least collecting info if it were pulled up as a diagnostic tool.
+F5. Learning speed — conservative vs aggressive default
+  Recommendation: start conservative; your corrections already weigh heavily in the
+  design. Ramp up if it feels too slow after a week of use.
+#User: this suggestion might partially solve the "common typo list" puzzle. I agree with your recommendation here.
+
+F6. Uniform vs independent key width/height scaling (±22% cap)
+  Recommendation: uniform scale per key unless testing shows asymmetric helps.
+#User: haa that's astoundingly close to what I typed higher up before reading this part. Great minds think alike, even if one is made of silicon and the other is a gray lump of fatty tissue. It's close enough that I'm ok with either -20% or -22% or right in between at -21% on the smallest size BUT on the largest size let's make the limit large enough to fill the space between it and all other keys WITHOUT overlapping. If a key next to it needs to grow, it shrinks to compensate or they both change size to meet at the halfway point. It's ok if the keys are invisibly touching, they just can't overlap.
+
+F7. Spell checker sharing the same learning data as IME
+  IME-first; spell checker can consume same DB later if cheap.
+#User: unfortunately I am not quite technically inclined enough to know what you mean. I've had great success coding with AI by simply having a back and forth dialog for clarity, so I'll just have you explain that to me at some point. 
+
+--------------------------------------------------------------------------------
+SECTION G — QUICK REFERENCE MAP (other ai_notes)
+--------------------------------------------------------------------------------
+
+  README.md                          — index of all docs
+  00_MASTER_PLAN_v2.txt              — phases and terminology
+  16_OPEN_QUESTIONS_v2.txt           — answered + open Q&A
+  17_USER_DECISIONS_AND_GLOSSARY_v2.txt — loops, hybrid, typo list rules
+  20_FEATURE_literal_swipe_dictionary_narrowing_v2.txt — STARTING algorithm
+  13_FEATURE_common_typo_list_v2.txt — Common Typo List behavior
+  18_SETTINGS_MENU_SPEC_v2.txt       — settings layout
+  19_PERFORMANCE_AND_MEMORY_v2.txt   — RAM, dict, caps
+  21_AGENT_SUGGESTIONS_AND_FINAL_NOTES_v2.txt — short index (this file expands it)
+
+--------------------------------------------------------------------------------
+PLANNING UPDATE (post-feedback)
+--------------------------------------------------------------------------------
+  Human # notes above are incorporated into:
+    22_PLANNING_LOCKDOWN_v3.txt
+    23_MAINTAINER_FEEDBACK_RESOLVED_v3.txt
+    20_FEATURE_literal_swipe_dictionary_narrowing_v3.txt
+  S2 "confidence gate" revised: commit top word; per-key confidence; strip learns.
+
+================================================================================
+END Composer_Suggestions
+================================================================================

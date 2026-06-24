@@ -1,0 +1,265 @@
+================================================================================
+GRAND PLAN & IMPLEMENTATION ROADMAP v4
+HeliBoard_and_heatmap — single master document (planning final)
+Next step after this doc: expand each roadmap step with implementation detail (next prompt), then code.
+================================================================================
+
+TABLE OF CONTENTS
+  A. Product in one page
+  B. Two-system architecture (swipe base vs autocorrect) — CRITICAL
+  C. Learning & training rules (who trains what)
+  D. Context / grammar engine (elimination only)
+  E. Common Typo List, settings, geometry (summary)
+  F. IMPLEMENTATION ROADMAP — ordered steps (= future AI prompts)
+  G. Document index & planning status
+
+================================================================================
+A. PRODUCT IN ONE PAGE
+================================================================================
+
+Build a keyboard where:
+  1. SWIPE BASE ("key-accuracy input") decodes finger path → letters → words using
+     any installed standard dictionary (no proprietary swipe dictionary, no swipe lib).
+     It is literal first; it may be wrong for bad spellers until trained.
+  2. AUTOCORRECT & LEARNING SYSTEM runs alongside always: logs swipes, taps, and
+     corrections even when autocorrect is OFF; quietly tunes swipe biases and key
+     geometry; when ON, may change committed text for real spelling/grammar fixes.
+  3. CONTEXT ENGINE (sub-feature of autocorrect) uses OSS grammar / n-gram data to
+     ELIMINATE impossible next-word suggestions — never to invent or heavily pick words.
+  4. COMMON TYPO LIST suppresses chronic mistake strings from pipeline output.
+  5. All on-device; user can reset learning; no cloud AI.
+
+Accuracy goal: movement → keys → dictionary, improved by user history — not commercial
+keyboard-style whole-word guessing (food/find failure mode).
+
+================================================================================
+B. TWO-SYSTEM ARCHITECTURE
+================================================================================
+
+Think of two cooperating products inside one IME:
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ SYSTEM 1 — SWIPE / TAP BASE ENGINE ("the keyboard")                         │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ Job: Turn input into text using key-accuracy + dictionary prefix narrowing. │
+│ Uses: Installed .dict (trie), coordinate map, per-segment key confidence.   │
+│ Output: Commits top path match on swipe lift; runner-ups in suggestion strip. │
+│                                                                             │
+│ Always-on quiet self-improvement (even if autocorrect OFF):                 │
+│   • Adjust swipe key biases / path weights from USER edits & strip picks    │
+│   • Adjust invisible key size/position (within limits) from USER behavior   │
+│   • Does NOT need autocorrect ON to learn from user fixing swipe output      │
+│                                                                             │
+│ User control: "Reset swipe learning" / "Reset key geometry" in settings.    │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ SYSTEM 2 — AUTOCORRECT & LEARNING ORCHESTRATOR                            │
+├─────────────────────────────────────────────────────────────────────────────┤
+│ Job: Intent recognition — fix spelling errors; apply chronic typo rules;    │
+│      coordinate training signals to System 1.                               │
+│                                                                             │
+│ ALWAYS RUNNING (logging & quiet tuning authority):                          │
+│   • Paragraph journal, WordSlots, heatmap DB, curve buckets                 │
+│   • Records swipe patterns + outcomes + corrections regardless of AC toggle │
+│   • May update System 1 weights quietly (same as user-driven training)      │
+│                                                                             │
+│ WHEN AUTOCORRECT OFF:                                                       │
+│   • Must NOT change committed text in the text field                        │
+│   • MAY still populate suggestion strip with proposed fixes (user optional) │
+│   • Strip-only suggestions still train System 1 if user selects one         │
+│                                                                             │
+│ WHEN AUTOCORRECT ON:                                                        │
+│   • May replace committed text for spelling/near-match fixes (spellng→      │
+│     spelling); grammar-invalid word in sentence (rate→rare in context)       │
+│   • Uses swipe path + keystrokes + key shifts + past corrections + context  │
+│     eliminator — NOT blind LM word guessing                                 │
+│   • If user accepts AC change → may accelerate training for that swipe path │
+│   • If user reverts AC → train toward user's word, not AC suggestion        │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+WHY THE SPLIT MATTERS
+  • Base swipe will sometimes perform poorly alone (weak spellers, empty heatmap).
+    That is expected early; System 2 fixes spelling/intent without replacing literal
+    decode philosophy.
+  • "Autocorrect" is not the same as "the keyboard guessing words." It is a layer
+    that fixes errors and feeds learning back to System 1.
+  • Turning autocorrect OFF still leaves a improving swipe experience over time.
+
+================================================================================
+C. LEARNING & TRAINING RULES
+================================================================================
+
+EVENT                              │ SYSTEM 1 (swipe/tap)      │ SYSTEM 2 (AC/log)
+───────────────────────────────────┼───────────────────────────┼────────────────────
+User completes swipe, keeps word   │ Reinforce path→word       │ Log accept
+User picks runner-up in strip      │ Train path→that word      │ Log pick
+User manually edits word in field  │ Train keys/path/geometry  │ Log correction
+User tap-after-swipe at same slot  │ Gentle tap; match runnerUp│ Log mode switch
+AC ON, replaces word, user keeps   │ Train path toward AC word │ Log AC accept
+AC ON, user reverts to own word    │ Train toward USER word    │ Penalize AC pair
+AC OFF                             │ Learn from edits only     │ No text mutation
+Reset learning (settings)          │ Clear biases/geometry     │ Clear typo weights*
+                                   │                           │ *Typo list optional separate reset
+
+AUTOCORRECT FIX TYPES (when ON)
+  T1  Near-match spelling: spellng / spellong → spelling (dictionary edit distance)
+  T2  Valid isolated word: fleeting alone → no change
+  T3  Grammar-invalid token in sentence: "this is so rate!" → rare (context engine)
+  T4  Chronic typo: tye → the (Common Typo List + history)
+  T5  Swipe+history intent: wrong path word corrected often → bias path (System 1)
+
+Training priority: user actions > accepted AC > quiet inference from repeated patterns.
+
+================================================================================
+D. CONTEXT / GRAMMAR ENGINE (sub-feature of System 2)
+================================================================================
+
+VERDICT: Good fit — with strict role = ELIMINATION ONLY.
+
+PURPOSE
+  Remove suggestion candidates that are grammatically or usage-impossible in slot,
+  not to choose the winning word. Swipe engine + user heatmap still pick among survivors.
+
+SOURCES (must be FLOSS, on-device, bundled or downloadable)
+  A) Open-source English n-gram / grammar constraint library (e.g. small n-gram
+     tables, rule-based grammar checker lexicon — exact package TBD in implement step)
+  B) User's own bigram/trigram stats from typed history (local, privacy-safe)
+
+BEHAVIOR EXAMPLES
+  After "OH MY" → eliminate "eating" as next-word suggestion (implausible continuation).
+  After "you're going to" → eliminate "sponge", "chocolate" as next slot candidates.
+  "this is so rate!" → flag "rate" as invalid in structure; allow "rare" as fix candidate because it is a highly similar swipe pattern and creates valid sentence structure.
+
+WEIGHT RULE (locked)
+  • Context/grammar may DISQUALIFY or heavily down-rank candidates (effectively -∞).
+  • Context/grammar must NOT outweigh swipe path + user correction history for which
+    key sequence was intended.
+  • Think: grammar is a filter on the suggestion set, not the primary scorer.
+
+OVERHEAD
+  • Keep lexicon/n-grams lean (tens of MB max, mmap).
+  • Run filter after candidate list built, before strip display / AC commit.
+  • If perf issues: disable on low-RAM devices via settings.
+
+SETTINGS
+  Under Heatmap Smart Keyboard:
+  [Toggle] Grammar context filter (default ON when bundled data present)
+
+================================================================================
+E. OTHER FEATURES (SHORT)
+================================================================================
+
+COMMON TYPO LIST — System 2; pipeline ban; tap-twice escape; density promotion (tune on device);
+  function-word guard (the, and, …) not length immunity.
+
+SETTINGS HUB — "Heatmap Smart Keyboard": learning master, sensitive fields (default off),
+  paragraph slider 500–3000 (snap 100), AC toggle, reset learning, typo list, diagnostics export,
+  grammar filter toggle, geometry toggles.
+
+KEY GEOMETRY — System 1 quiet adjust; 80% min size; grow to gap only; no overlap;
+  tap/swipe separate; reset buttons.
+
+DIAGNOSTICS — Permanent: session record, JSON export, heatmap overlay, metrics.
+
+================================================================================
+F. IMPLEMENTATION ROADMAP (ORDERED FOR BEST TESTING)
+================================================================================
+Each numbered step = one future implementation prompt / milestone.
+Test on phone after each step before starting the next unless noted.
+
+─── BLOCK 0: PLANNING (complete) ───
+  0   Planning docs v4 locked (this file + 20_v3 + 23_v3 + 24_glossary)
+
+─── BLOCK 1: DATA & OBSERVABILITY (test: "is data flowing?") ───
+  1   WordSlot IDs + paragraph ring buffer (slider wiring can come step 3)
+  2   WordSession schema: swipe polyline, tap keys, mode, slot, committed vs final text
+  3   Settings shell: "Heatmap Smart Keyboard" category (minimal: master on/off, export)
+  4   Correction detector + flush triggers (send, blur, window slide, in-window edit)
+  5   Always-on session recording (core path — not optional debug-only)
+  6   JSON / file dump export for AI + self review (S3, S7) — beta 0.0.0.13 (1.13)
+  7   Device metrics hooks: latency, prefix branch count stub, heap snapshot (P4) — beta 0.0.0.17 (1.14)
+
+─── BLOCK 2: LEARNING STORE (test: "does DB persist across restart?") ───
+  8   SQLite (or binary) heatmap schema: key counters tap/swipe, word-pairs, slots
+  9   Coordinate map: layout → key bounds; store layout hash per locale
+  10  Curve/path signature buckets + alignment offsets (compressed)
+  11  Reset learning buttons (swipe biases, geometry, typo weights — separate confirms)
+  12  Conservative weight update + decay from user corrections only (no AC yet)
+
+─── BLOCK 3: SWIPE BASE v0 (test: "does literal path commit words from real dict?") ───
+  12b LOCKED: Swipe must never commit lone A/I when stroke spans multiple keys (41_*);
+      interim guard in legacy Suggest.kt; literal engine must enforce same rule
+  13  Segment→key inference on coordinate map (straight, corner; row rules)
+  14  Dictionary prefix narrowing via existing BinaryDictionary trie (no swipe lib)
+  15  Runner-up list + commit top word on lift; strip shows alternates
+  16  Developer toggle: "Use literal swipe engine" vs legacy path (compare logs)
+  17  Recorded-stroke replay harness (coordinates only, dict from install — no embedded words)
+
+─── BLOCK 4: QUIET SYSTEM 1 IMPROVEMENT (test: "does swipe get better without AC on?") ───
+  18  Apply key/path biases during decode from heatmap (AC can stay OFF)
+  19  Strip alternate pick → train path signature → word
+  20  Retroactive correction in paragraph window updates correct slot session
+  21  Swipe→tap same slot: gentle AC + runner-up matcher (no auto dict add)
+
+─── BLOCK 5: AUTOCORRECT ORCHESTRATOR (test: "AC off vs on text behavior") ───
+  21b DONE (beta 0.0.0.11): Per-mode prefs + policy stub — heatmap_tap_autocorrect_enabled,
+      heatmap_swipe_autocorrect_enabled (default OFF); HeatmapAutocorrectPolicy_v1 routes
+      to HeliBoard until Block 5 sets isHeatmapAutocorrectImplemented(); learning independent
+  22  AC subsystem OFF: suggestions in strip only; never mutate committed text
+  23  AC ON: near-match spelling fixes (T1); valid word alone unchanged (T2)
+  24  AC accept vs revert detection; training rules (C section)
+  25  AC ON + System 1: accepted AC may tune swipe; revert trains user word
+
+─── BLOCK 6: COMMON TYPO LIST (test: "tye stops appearing after density threshold") ───
+  26  Typo promotion density rules (tune on device); function-word guard
+  27  Common Typo List settings UI; unban keeps data; tap-twice escape
+  28  Pipeline suppress + forced target (e.g. tye→the) when ON
+
+─── BLOCK 7: CONTEXT / GRAMMAR FILTER (test: "OH MY" does not suggest eating) ───
+  29  Integrate OSS n-gram / grammar constraint package (evaluate size + license)
+  30  Next-word and in-sentence ELIMINATION filter on candidate sets only
+  31  Grammar-invalid fix: rate→rare example (T3); user bigram stats merge (B)
+  32  Setting to disable grammar filter on low-end devices
+
+─── BLOCK 8: KEY GEOMETRY (test: "fam/fan style drift after corrections") ───
+  33  Tap invisible hit-box adjust (limits: 80% min, no overlap, gap fill)
+  34  Swipe geometry toggle (default off); bias-first
+  35  Neighbor compensation (meet halfway)
+
+─── BLOCK 9: REPLACE LEGACY SWIPE (test: full day typing without swypelibs) ───
+  36  Literal engine default ON; legacy gesture path fallback flag only
+  37  Remove dependency on null/proprietary GestureSuggestPolicy for daily use
+
+─── BLOCK 10: POLISH & POST-V1 ───
+  38  Heatmap debug overlay
+  39  Full settings parity (18_SETTINGS spec)
+  40  Sensitive-field learning toggle + privacy copy
+  41  Export/import learning backup
+  42  Spell checker shared DB (optional — explain in 24_GLOSSARY)
+  43  Optional tiny on-device classifier among existing candidates only
+
+================================================================================
+G. HOW TO USE THIS ROADMAP
+================================================================================
+
+NEXT PROMPT (maintainer): Ask agent to expand steps 1–7 (or chosen range) with file-level
+implementation notes against HeliBoard tree (01–07 *.md).
+
+CODING START: Step 1 after detail pass; use versioned filenames per user rule.
+
+ADJUSTMENTS: Maintainer may reorder or split steps; update this file (_v5) additively.
+
+OTHER DEEP SPECS (unchanged, reference):
+  20_FEATURE_literal_swipe_dictionary_narrowing_v3.txt
+  23_MAINTAINER_FEEDBACK_RESOLVED_v3.txt
+  13_FEATURE_common_typo_list_v2.txt
+  18_SETTINGS_MENU_SPEC_v2.txt
+  19_PERFORMANCE_AND_MEMORY_v2.txt
+  Composer_Suggestions.txt (# feedback preserved)
+
+PLANNING STATUS: FINAL for architecture; implementation detail = next prompt.
+
+================================================================================
+END GRAND PLAN v4
+================================================================================

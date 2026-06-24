@@ -427,6 +427,38 @@ public final class BinaryDictionary extends Dictionary {
                 getWordProperty(word, isBeginningOfSentence[0]), nextToken);
     }
 
+    // ai-note: lightweight word+frequency consumer used by the heatmap gesture decoder
+    // (HeatmapLexiconTrie_v1). Avoids the full WordProperty allocation that
+    // getNextWordProperty performs per word, so the whole lexicon can be enumerated
+    // into an in-memory trie at dictionary-load time on a background thread.
+    public interface WordFrequencyConsumer {
+        void accept(final String word, final int frequency);
+    }
+
+    /**
+     * Enumerates every unigram in this dictionary, invoking [consumer] with the word and its
+     * raw probability. Beginning-of-sentence tokens and empty words are skipped. Intended for
+     * building an in-memory gesture lexicon; not for general use.
+     */
+    public void forEachWord(final WordFrequencyConsumer consumer) {
+        final int[] codePoints = new int[DICTIONARY_MAX_WORD_LENGTH];
+        final boolean[] isBeginningOfSentence = new boolean[1];
+        int token = 0;
+        do {
+            java.util.Arrays.fill(codePoints, 0); // ai-note: must clear because native doesn't null-terminate
+            token = getNextWordNative(mNativeDict, token, codePoints, isBeginningOfSentence);
+            if (isBeginningOfSentence[0]) {
+                continue;
+            }
+            final String word = StringUtils.getStringFromNullTerminatedCodePointArray(codePoints);
+            if (word == null || word.isEmpty()) {
+                continue;
+            }
+            consumer.accept(word, getProbabilityNative(mNativeDict,
+                    StringUtils.toCodePointArray(word)));
+        } while (token != 0);
+    }
+
     // Add a unigram entry to binary dictionary with unigram attributes in native code.
     public boolean addUnigramEntry(final String word, final int probability,
             final String shortcutTarget, final int shortcutProbability,

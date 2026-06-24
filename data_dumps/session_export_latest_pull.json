@@ -1,0 +1,107 @@
+﻿{
+  "schemaVersion": 1,
+  "exportedAtMs": 1781298483654,
+  "exportSource": "ime_commit",
+  "build": {
+    "beta": "0.0.0.27",
+    "roadmapStep": 15,
+    "statusLine": "Heatmap learning beta 0.0.0.27 (roadmap step 15)"
+  },
+  "settings": {
+    "learningEnabled": true,
+    "paragraphWindowChars": 3000,
+    "tapHeatmapAutocorrect": true,
+    "swipeHeatmapAutocorrect": true,
+    "autoFileDump": false
+  },
+  "instrumentation": {
+    "lifetimeCommits": 426,
+    "lastFlushReason": "FIELD_BLUR",
+    "lastFlushHost": "com.google.android.youtube",
+    "totalFlushes": 163,
+    "selectionEditEvents": 162,
+    "pendingFinalTextSync": 0,
+    "lastFieldProbe": "before=1 after=0 fp=1116",
+    "snapshotBeta": "0.0.0.27",
+    "snapshotJournalChars": 8,
+    "snapshotJournalWords": 2,
+    "snapshotLastWord": "butt",
+    "snapshotHostPackage": "com.google.android.youtube"
+  },
+  "metrics": {
+    "commitCount": 425,
+    "commitLastMs": 79,
+    "commitAvgMs": 53,
+    "commitMaxMs": 101,
+    "commitP95Ms": 79,
+    "heapUsedMbAtFlush": 12,
+    "heapMaxMbAtFlush": 256,
+    "prefixBranchStubCount": 0
+  },
+  "learningStore": {
+    "schemaVersion": 4,
+    "dbPath": "\/data\/user\/0\/helium314.keyboard.debug\/files\/heatmap_learning\/heatmap_store.db",
+    "persistedCommitCount": 426,
+    "keyStatRows": 25,
+    "wordPairRows": 344,
+    "layoutHash": "lh_efffa97086f33f4d8af32aa512eff7cf96d242b177cc64fe9aae0b391aeff3ff",
+    "localeTag": "en-US",
+    "keyBoundsRows": 26,
+    "pathBucketRows": 2,
+    "alignmentOffsetRows": 7,
+    "letterConfusionRows": 2,
+    "wordCorrectionRows": 3
+  },
+  "wordSessions": [
+    {
+      "slotId": 1,
+      "sessionGeneration": 1,
+      "hostPackage": "com.google.android.youtube",
+      "inputMode": "SWIPE",
+      "commitType": "USER_TYPED",
+      "committedText": "bit",
+      "finalText": "bit",
+      "typedText": "bit",
+      "separatorCharCount": 0,
+      "committedAtMs": 1781298477358,
+      "swipeTracePointCount": 23,
+      "tapKeyCount": 0
+    },
+    {
+      "slotId": 2,
+      "sessionGeneration": 1,
+      "hostPackage": "com.google.android.youtube",
+      "inputMode": "SWIPE",
+      "commitType": "USER_TYPED",
+      "committedText": "butt",
+      "finalText": "butt",
+      "typedText": "butt",
+      "separatorCharCount": 1,
+      "committedAtMs": 1781298483620,
+      "swipeTracePointCount": 21,
+      "tapKeyCount": 0
+    }
+  ],
+  "paragraphJournal": [
+    {
+      "slotId": 1,
+      "word": "bit",
+      "charCount": 3
+    },
+    {
+      "slotId": 2,
+      "word": "butt",
+      "charCount": 5
+    }
+  ],
+  "liveImeSession": {
+    "sessionGeneration": 1,
+    "wordsCommitted": 2,
+    "journalUsedChars": 8,
+    "journalMaxChars": 3000,
+    "journalWordCount": 2,
+    "lastSlotId": 2,
+    "lastWord": "butt",
+    "lastHostPackage": "com.google.android.youtube"
+  }
+}

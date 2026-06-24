@@ -1,0 +1,29 @@
+DESIGN — Block 2 step 9 coordinate map + layout hash (beta 0.0.0.19)
+================================================================================
+ROADMAP_STEP → 9
+
+GOAL
+  Snapshot alphabet keyboard → letter-key hit bounds + stable layout_hash (lh_<sha256>).
+  Persist bounds in heatmap_key_bounds (schema v2, additive migration — keeps commits).
+
+FILES
+  HeatmapCoordinateMap_v1.kt — fromKeyboard, computeLayoutHash, keyAt, keyLabelForFirstLetter
+  HeatmapLayoutContext_v2.kt — captureForCommit via KeyboardSwitcher; caches last alphabet map
+  HeatmapKeyBoundsStore_v1.kt — ensurePersisted per locale+hash
+  HeatmapLearningDatabase_v1 — SCHEMA_VERSION 2, TABLE_KEY_BOUNDS
+  HeatmapInstrumentationSnapshot_v9.kt — status wiring (layout block in store)
+
+HOOK
+  HeatmapLearningStore_v1.recordWordCommit — capture layout, persist bounds, real hash on stats
+
+MIGRATION
+  v1→v2 adds key_bounds only (no wipe). Old rows keep layout_v0; new commits use lh_* hash.
+
+VERIFY (user)
+  1. Install; type a few words in Kingshot
+  2. Status → Layout hash starts with lh_ (not layout_v0)
+  3. Persisted bounds rows ≈ 26 for QWERTY
+  4. Export JSON → learningStore.keyBoundsRows > 0
+  5. Prior 460 commits still present after upgrade
+
+NEXT: step 10 curve/path signature buckets

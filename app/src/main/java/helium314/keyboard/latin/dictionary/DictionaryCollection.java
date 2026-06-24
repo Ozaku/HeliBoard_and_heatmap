@@ -38,6 +38,10 @@ public final class DictionaryCollection extends Dictionary {
         } else mWeights = weights;
     }
 
+    public Collection<Dictionary> getDictionaries() {
+        return mDictionaries;
+    }
+
     @Override
     public ArrayList<SuggestedWordInfo> getSuggestions(final ComposedData composedData,
             final NgramContext ngramContext, final long proximityInfoHandle,

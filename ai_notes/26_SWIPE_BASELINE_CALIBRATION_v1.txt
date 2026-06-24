@@ -1,0 +1,48 @@
+================================================================================
+SWIPE BASELINE CALIBRATION v1 — offline workflow (Phase 1 / Stage 5)
+HeliBoard_and_heatmap — not runtime training; bakes OOTB defaults at build time
+================================================================================
+
+PURPOSE
+  Device testing produces rich swipe exports (schema v2). Developers analyze those
+  exports offline to tune HeatmapSwipeTuningConstants_v1 and HeatmapSwipeIntentPrototype_v1
+  before shipping — so the keyboard is accurate "out of the box" before per-user learning.
+
+DATA SOURCES (adb pull)
+  - session_export_latest.json (HeatmapInstrumentationJson_v2)
+  - swipeTraceRing: last 20 swipes (quick review)
+  - wordSessions[]: full trace + swipeDecodeDiagnostics per commit
+
+OPTIONAL TEST LABELS (for calibration clustering)
+  - swipeTargetWord: word tester intended (manual or test harness)
+  - swipeStyle: slow_deliberate | fast_straight | fast_curved | ambiguous_start
+  - swipeOutcomeCorrect: committedText == targetWord
+
+OFFLINE PIPELINE (HeatmapSwipeBaselineCalibration_v1)
+  1. parseExportJson(export) -> List<SwipeSample>
+  2. cluster(samples) -> Report with ClusterSummary per (word, style)
+  3. Review recommendedDwellMinMs, recommendedTransitSpeedKwPerSec, etc.
+  4. Update HeatmapSwipeTuningConstants_v1 + bump TUNING_REVISION
+  5. Rebuild app; repeat test matrix until slow swipes pass
+
+WHAT TO LOOK FOR PER CLUSTER
+  - medianDwellMs when outcomeCorrect=true
+  - intentPathLenMedian vs visitOrderLenMedian (transit skipping working?)
+  - slowStrokeRatio for deliberate vs fast styles
+
+RELATIONSHIP TO PER-USER TRAINING (Block 4 — later)
+  - This calibration: global defaults, build-time, from multi-session corpus
+  - Block 4: per-user heatmap DB adjusts decode at runtime
+
+MANUAL TEST MATRIX (device)
+  Slow: wrong, works, keyboard, typing
+  Fast: purposes, pretty, prototype
+  Ambiguous start: W/E boundary
+  Near spacebar: words ending N/G
+
+PASS CRITERIA
+  - swipeDecodeDiagnostics.pointerIntegrityOk == true
+  - pathLen / intentPathLen matches word length on slow swipes
+  - fast straight: transit keys in visitOrder but not intentPath
+
+EOF

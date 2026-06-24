@@ -1,0 +1,140 @@
+================================================================================
+FEATURE 1 — THREE-SIGNAL SWIPE DECODING v1
+Related: Planned Features.txt §1; 04_swipe_gesture_input.md
+================================================================================
+
+USER INTENT (summary)
+  Decode swipe using three cooperating signals:
+    A) First letter touched — constrains dictionary to words starting with that key.
+    B) Path shape — straight segments, sharp corners, loops; corners imply letters
+       at those keyboard regions even when path is messy.
+    C) Last letter touched — constrains words ending with that key.
+  Then pick best dictionary match, keep runner-ups in memory.
+  Heatmap (Feature 2/3) disambiguates near paths (e.g. G vs H on way to PHASE).
+
+WORKED EXAMPLES (from user)
+  - P → straight through A,U,S,E → E  ⇒ PAUSE (100% path match).
+  - P>G>A>S>E with heatmap favoring G over H ⇒ PHASE not PHASE-with-H.
+  - P>L>[loop A&S starting A→T]>I>C ⇒ PLASTIC (loop encodes AS / ST region).
+
+--------------------------------------------------------------------------------
+WHY HELIBOARD TODAY MISBEHAVES (baseline)
+--------------------------------------------------------------------------------
+  Native ProximityInfo marks many keys "near" each stroke sample. Gesture trie
+  explores paths through that expanded set, so letters from uncrossed rows can
+  win on dictionary frequency / language model score.
+  Fixing only Kotlin strip logic cannot remove wrong letters already chosen in
+  native decode — need proximity and/or gesture policy change (04_swipe).
+
+--------------------------------------------------------------------------------
+PROPOSED LOGICAL PIPELINE (target architecture)
+--------------------------------------------------------------------------------
+
+  Step 1 — CAPTURE (existing, may tune sampling)
+    BatchInputArbiter collects InputPointers (x,y,time).
+    Consider: higher temporal resolution near corners; preserve first/last
+    touch down/up events explicitly (may need PointerTracker hooks).
+
+  Step 2 — PREPROCESS STROKE
+    2a) Snap start point → key K0 (first signal).
+    2b) Snap end point → key K_end (last signal).
+    2c) Simplify polyline (Ramer-Douglas-Peucker or uniform resample).
+    2d) Detect features:
+        - Straight runs: dominant direction, few keys along segment.
+        - Corners: angle change > threshold θ (e.g. 45–70° tunable).
+        - Loops: self-intersection or winding; order of keys visited matters
+          (user: loop around A&S starting with A leading to T).
+    2e) Emit ordered key hypothesis sequence: K0, K1, K2, ... K_end
+        (not necessarily unique — same key twice allowed for double letters).
+
+  Step 3 — CONSTRAINT FILTER (dictionary)
+    Candidate words W where:
+      first(W) == label(K0)
+      last(W)  == label(K_end)
+      length(W) ≈ len(hypothesis sequence) within slack (+/- 1 optional)
+    Use existing BinaryDictionary search if possible (prefix tree) else
+    auxiliary index built at dict load time.
+
+  Step 4 — PATH ALIGNMENT SCORE
+    For each candidate W, align hypothesis keys to W's letters:
+      - Match score: exact key hits along straight segments.
+      - Penalty: skipped hypothesis key, extra letter in W not supported by path.
+      - Corner bonus: corner location maps to key center of letter at that index.
+      - Loop handling: treat subpath as "visited keys" multiset or ordered
+        subsequence — PLASTIC case needs ordered subsequence match (A,S around loop).
+
+  Step 5 — HEATMAP / TRAINING TIE-BREAK (Features 2–3)
+    When two candidates tie on path score (P>G>A>S>E → PHASE vs ???):
+      apply per-key bias: prefer keys user historically intends at that region.
+      Prefer words user never corrects away from.
+
+  Step 6 — OUTPUT
+    Primary word + ranked alternates (strip, long-press undo, next-word prediction).
+
+--------------------------------------------------------------------------------
+CORNER & LOOP DETECTION — OPTIONS
+--------------------------------------------------------------------------------
+
+OPTION A — Angle-based corners (simple, explainable)
+  At each interior point, compute turning angle; if |angle| > θ, insert key at
+  nearest key center to that point. Good for "sharp direction changes" user named.
+  Risk: noisy touch jitter creates fake corners → need min segment length filter.
+
+OPTION B — Grid crossing sequence (AOSP-adjacent)
+  List keys whose hit boxes the stroke enters in time order; collapse consecutive
+  duplicates; first=K0, last=K_end. Corners implicit when sequence turns.
+  Risk: still includes proximity neighbors unless hit boxes are tight.
+
+OPTION C — Hidden Markov / Viterbi on key graph
+  States = keys; emissions = stroke distance to key centers; transition = adjacency.
+  Decode most likely key sequence then dictionary match.
+  Heavier implementation but standard in literature; still local, no AI API.
+
+OPTION D — Dictionary-driven beam search
+  Beam of partial words from trie; extend only if stroke segment can reach next
+  letter's key region. First/last letter prune beam ends.
+  Most aligned with "pull closest word from dictionary" user wording.
+
+RECOMMENDATION FOR DISCUSSION
+  Start with A + B hybrid for prototype (corners + time-ordered key crossings with
+  TIGHT hit boxes), layer D for production quality. C optional if beam insufficient.
+
+--------------------------------------------------------------------------------
+FIRST / LAST LETTER ANCHORING — EDGE CASES
+--------------------------------------------------------------------------------
+  - User starts on space bar or near boundary: fall back to best partial match or
+    require minimum dwell on first key.
+  - Word length 1: first == last; dictionary single-letter words rare — special case.
+  - Numbers / symbols mode: disable three-signal or use separate symbol lexicon.
+  - Multilingual mid-word keyboard switch: reset session anchors.
+  - Emoji slide: out of scope for v1 decode path.
+
+--------------------------------------------------------------------------------
+RUNNER-UP LIST ("keep close matches in memory")
+--------------------------------------------------------------------------------
+  Purpose: faster user correction without re-swipe; training signal when user picks
+  alternate (which candidate was close but wrong).
+  Store: top N (e.g. 8) {word, score, keySequenceAlignment} per gesture session.
+  Clear on: new gesture, field change, commit accepted word.
+  Do not auto-learn from runner-up until user selects or commits.
+
+--------------------------------------------------------------------------------
+INTEGRATION POINTS IN REPO (future code — reference only)
+--------------------------------------------------------------------------------
+  PointerTracker.java, BatchInputArbiter.java, GestureStrokeRecognitionPoints.java
+  WordComposer.java (batch pointers), Suggest.kt getSuggestedWordsForBatchInput
+  ProximityInfo.java, proximity_info.cpp, gesture_suggest_policy_factory.cpp
+  DictionaryFacilitatorImpl.kt (merge suggestion results)
+
+--------------------------------------------------------------------------------
+MILESTONES FOR FEATURE 1 ALONE
+--------------------------------------------------------------------------------
+  M1  Logging-only: compute K0, corner sequence, K_end; show in debug overlay.
+  M2  Kotlin post-filter: re-rank native suggestions using three-signal score.
+  M3  Native proximity tightening: shrink neighbor set along stroke normal.
+  M4  Full open-source gesture policy with embedded decode pipeline.
+  M5  Loop + multi-segment polish (PLASTIC-class paths).
+
+================================================================================
+END FEATURE 1 v1
+================================================================================

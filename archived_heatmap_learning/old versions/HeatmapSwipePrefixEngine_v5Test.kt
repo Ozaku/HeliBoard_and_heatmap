@@ -1,0 +1,32 @@
+// SPDX-License-Identifier: GPL-3.0-only
+package helium314.keyboard.heatmap.swipe
+
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
+import org.junit.Test
+
+class HeatmapSwipePrefixEngine_v5Test {
+
+    @Test
+    fun straightTwoKeyOmitsStartOnlyPrefix() {
+        val infer = HeatmapSwipeSegmentInfer_v4.Result(
+            startKeyLabel = "i",
+            pathLetters = listOf("i", "m"),
+            pathLettersRaw = listOf("i", "m"),
+            endKeyLabel = "m",
+            beatCount = 2,
+            beatCountRaw = 2,
+            classifiedBeats = emptyList(),
+            straightLine = HeatmapSwipeStraightLine_v1.Analysis(
+                shape = HeatmapSwipeStraightLine_v1.StrokeShape.NEAR_STRAIGHT_TWO_LETTER,
+                maxWordLength = 2,
+                maxBearingChangeDeg = 5.0,
+            ),
+            maxWordLength = 2,
+        )
+        val variants = HeatmapSwipePrefixEngine_v5.buildPrefixVariants(infer)
+        assertTrue(variants.contains("im"))
+        assertFalse(variants == listOf("i"))
+        assertFalse(variants.any { it == "i" && it.length == 1 })
+    }
+}

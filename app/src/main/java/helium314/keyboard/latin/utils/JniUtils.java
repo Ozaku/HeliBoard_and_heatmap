@@ -40,6 +40,8 @@ public final class JniUtils {
     }
 
     public static boolean sHaveGestureLib = false;
+    /** ai-note: true when user-imported libjni_latinime.so loaded — blocks heatmap swipe per 48_. */
+    public static boolean sUserImportedGestureLib = false;
     static {
         // hardcoded default path, may not work on all phones
         @SuppressLint("SdCardPath") String filesDir = "/data/data/" + BuildConfig.APPLICATION_ID + "/files";
@@ -77,6 +79,7 @@ public final class JniUtils {
                     // try loading the library
                     System.load(userSuppliedLibrary.getAbsolutePath());
                     sHaveGestureLib = true; // this is an assumption, any way to actually check?
+                    sUserImportedGestureLib = true;
                 } else {
                     // delete if checksum doesn't match
                     // this is bad if we can't get the application and the user has a different library than expected...

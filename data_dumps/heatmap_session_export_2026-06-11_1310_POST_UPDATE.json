@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "exportedAtMs": 1780503258599,
+  "exportSource": "ime_flush_FIELD_BLUR",
+  "build": {
+    "beta": "0.0.0.13",
+    "roadmapStep": 4,
+    "statusLine": "Heatmap learning beta 0.0.0.13 (roadmap step 4)"
+  },
+  "settings": {
+    "learningEnabled": true,
+    "paragraphWindowChars": 3000,
+    "tapHeatmapAutocorrect": false,
+    "swipeHeatmapAutocorrect": true,
+    "autoFileDump": false
+  },
+  "instrumentation": {
+    "lifetimeCommits": 237,
+    "lastFlushReason": "FIELD_BLUR",
+    "lastFlushHost": "com.google.android.documentsui",
+    "totalFlushes": 121,
+    "selectionEditEvents": 80,
+    "pendingFinalTextSync": 0,
+    "lastFieldProbe": "before=15 after=0 fp=-851907525",
+    "snapshotBeta": "0.0.0.13",
+    "snapshotJournalChars": 115,
+    "snapshotJournalWords": 18,
+    "snapshotLastWord": "bad",
+    "snapshotHostPackage": "com.google.android.apps.translate"
+  },
+  "wordSessions": [],
+  "paragraphJournal": [],
+  "liveImeSession": {
+    "sessionGeneration": 1,
+    "wordsCommitted": 0,
+    "journalUsedChars": 0,
+    "journalMaxChars": 3000,
+    "journalWordCount": 0
+  }
+}

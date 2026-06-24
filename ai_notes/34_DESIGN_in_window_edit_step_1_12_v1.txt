@@ -1,0 +1,48 @@
+================================================================================
+
+DESIGN — Step 1.12 In-window edit detection stub
+
+Beta 0.0.0.12 · Block 1 · ROADMAP_STEP 4 (unchanged)
+
+================================================================================
+
+
+
+IN
+
+  - onUpdateSelection → InWindowEditDetector (selection move counter + logcat)
+
+  - FieldTextProbe on FIELD_BLUR / IME_ACTION (getTextBefore/After, 120/80 chars)
+
+  - WordSessionRegistry pendingFinalTextSync slot set (finalText still = committed)
+
+  - Status: — In-window edit (beta 1.12) —
+
+
+
+OUT (1.13+)
+
+  - Per-slot finalText := field word at index
+
+  - CorrectionEvent records
+
+  - JSON export of sessions
+
+
+
+VERIFY (user PowerShell build)
+
+  1. Type 3 words, move cursor → logcat: selection sel=...
+
+  2. Hide keyboard → fieldDiff stub before=... + flush FIELD_BLUR
+
+  3. Settings status: Selection moves > 0, Pending finalText sync ≥ word count
+
+
+
+================================================================================
+
+END
+
+================================================================================
+

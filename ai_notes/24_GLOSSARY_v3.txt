@@ -1,0 +1,43 @@
+================================================================================
+GLOSSARY v3 — terms for maintainer + agents
+================================================================================
+
+TRIE (pronounced "try")
+  The main dictionary file on disk is not a flat word list. It is a Patricia trie:
+  a tree where each branch is a letter sequence. Looking up words starting with
+  "ne" walks only that branch — fast, without loading every "n" word into RAM.
+  HeliBoard already uses this via BinaryDictionary JNI. Our swipe engine asks
+  "what words still match prefix NE?" at each segment.
+
+INPUT METHOD EDITOR (IME) vs SPELL CHECKER
+  IME = the keyboard app you type with (HeliBoard). It inserts text and shows the
+  suggestion strip while you compose.
+  Spell checker = a separate Android service (red underlines in some apps) that
+  flags misspellings after the fact. HeliBoard has AndroidSpellCheckerService.
+  F7 suggestion: all heatmap/typo learning lives in the IME first; spell checker
+  can read the same database later so underlines agree with keyboard — optional,
+  not required for v1.
+
+SUGGESTION STRIP
+  The bar above keys showing alternate words. Runner-ups stay here after swipe
+  commit so user can tap the right word and train the pattern.
+
+WORD SLOT
+  Integer id for "which word in the current paragraph session" — isolates swipe
+  history, tap-after-swipe gentle mode, and typo list escape rules.
+
+RUNNER-UP / ALMOST-MATCH
+  Dictionary candidates pruned during swipe but kept scored (e.g. starring when
+  starting wins). Used for strip display and tap-after-swipe matching.
+
+COORDINATE MAP
+  Normalized (x,y) space of keyboard view mapped to key bounds + per-user
+  invisible hit-box offsets (separate for tap vs swipe).
+
+FREQUENT / COMMON TYPO LIST
+  User-visible name. Strings repeatedly corrected away; pipeline suppresses them.
+  (Code prefix CommonTypo.)
+
+================================================================================
+END
+================================================================================

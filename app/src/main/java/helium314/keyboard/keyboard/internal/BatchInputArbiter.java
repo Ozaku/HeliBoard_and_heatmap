@@ -6,6 +6,8 @@
 
 package helium314.keyboard.keyboard.internal;
 
+import helium314.keyboard.keyboard.Key;
+import helium314.keyboard.heatmap.swipe.HeatmapSwipeTapGate_v1;
 import helium314.keyboard.latin.common.Constants;
 import helium314.keyboard.latin.common.InputPointers;
 
@@ -97,8 +99,29 @@ public class BatchInputArbiter {
      *     <code>listener</code> will be called when the batch input has started successfully.
      * @return true if the batch input has started successfully.
      */
-    public boolean mayStartBatchInput(final BatchInputArbiterListener listener) {
-        if (!mRecognitionPoints.isStartOfAGesture()) {
+    public boolean mayStartBatchInput(final Key startKey, final int fallbackKeyWidth,
+            final int fallbackKeyHeight, final BatchInputArbiterListener listener) {
+        return mayStartBatchInput(startKey, fallbackKeyWidth, fallbackKeyHeight, false, listener);
+    }
+
+    /**
+     * @param heatmapRelaxedStart when true, skip legacy {@code isStartOfAGesture} (heatmap tap gate only)
+     */
+    public boolean mayStartBatchInput(final Key startKey, final int fallbackKeyWidth,
+            final int fallbackKeyHeight, final boolean heatmapRelaxedStart,
+            final BatchInputArbiterListener listener) {
+        if (!heatmapRelaxedStart && !mRecognitionPoints.isStartOfAGesture()) {
+            return false;
+        }
+        final int size = mRecognitionPoints.getLength();
+        if (size < 2) {
+            return false;
+        }
+        // ai-note: Block 3 step 13a — reject micro-drags shorter than one key axis
+        if (!HeatmapSwipeTapGate_v1.qualifiesAsSwipe(
+                mRecognitionPoints.getX(0), mRecognitionPoints.getY(0),
+                mRecognitionPoints.getX(size - 1), mRecognitionPoints.getY(size - 1),
+                startKey, fallbackKeyWidth, fallbackKeyHeight)) {
             return false;
         }
         synchronized (sAggregatedPointers) {

@@ -36,6 +36,7 @@ import helium314.keyboard.latin.utils.ScriptUtils;
 import helium314.keyboard.latin.utils.SubtypeSettings;
 import helium314.keyboard.latin.utils.SubtypeUtilsKt;
 import helium314.keyboard.latin.utils.ToolbarMode;
+import helium314.keyboard.heatmap.swipe.HeatmapLiteralSwipeSettings_v2;
 
 import java.util.List;
 import java.util.Locale;
@@ -105,6 +106,14 @@ public class SettingsValues {
     public final boolean mSuggestPunctuation;
     public final boolean mCenterSuggestionTextToEnter;
     public final boolean mGestureInputEnabled;
+    /** ai-note: legacy HeliBoard glide JNI (requires external gesture lib). */
+    public final boolean mLegacyGlideInputEnabled;
+    /** ai-note: Block 3 step 14a — heatmap geometry swipe; no gesture-lib requirement. */
+    public final boolean mHeatmapSwipeEnabled;
+    /** ai-note: alias for decode routing — same as mHeatmapSwipeEnabled. */
+    public final boolean mUseLiteralSwipeEngine;
+    /** ai-note: pointer batch + trail when heatmap OR legacy glide active. */
+    public final boolean mSwipeGesturesEnabled;
     public final boolean mGestureTrailEnabled;
     public final boolean mGestureFloatingPreviewTextEnabled;
     public final boolean mGestureFloatingPreviewDynamicEnabled;
@@ -251,7 +260,14 @@ public class SettingsValues {
         mKeypressVibrationDuration = prefs.getInt(Settings.PREF_VIBRATION_DURATION_SETTINGS, Defaults.PREF_VIBRATION_DURATION_SETTINGS);
         mKeypressSoundVolume = prefs.getFloat(Settings.PREF_KEYPRESS_SOUND_VOLUME, Defaults.PREF_KEYPRESS_SOUND_VOLUME);
         mEnableEmojiAltPhysicalKey = prefs.getBoolean(Settings.PREF_ENABLE_EMOJI_ALT_PHYSICAL_KEY, Defaults.PREF_ENABLE_EMOJI_ALT_PHYSICAL_KEY);
-        mGestureInputEnabled = JniUtils.sHaveGestureLib && prefs.getBoolean(Settings.PREF_GESTURE_INPUT, Defaults.PREF_GESTURE_INPUT);
+        mLegacyGlideInputEnabled = JniUtils.sHaveGestureLib && prefs.getBoolean(
+                Settings.PREF_GESTURE_INPUT, Defaults.PREF_GESTURE_INPUT);
+        mHeatmapSwipeEnabled = !JniUtils.sUserImportedGestureLib && prefs.getBoolean(
+                HeatmapLiteralSwipeSettings_v2.PREF_USE_LITERAL_SWIPE_ENGINE,
+                HeatmapLiteralSwipeSettings_v2.DEFAULT_HEATMAP_SWIPE_ENABLED);
+        mUseLiteralSwipeEngine = mHeatmapSwipeEnabled;
+        mSwipeGesturesEnabled = mHeatmapSwipeEnabled || mLegacyGlideInputEnabled;
+        mGestureInputEnabled = mLegacyGlideInputEnabled;
         mGestureTrailEnabled = prefs.getBoolean(Settings.PREF_GESTURE_PREVIEW_TRAIL, Defaults.PREF_GESTURE_PREVIEW_TRAIL);
         mGestureFloatingPreviewTextEnabled = !mInputAttributes.mDisableGestureFloatingPreviewText
                 && prefs.getBoolean(Settings.PREF_GESTURE_FLOATING_PREVIEW_TEXT, Defaults.PREF_GESTURE_FLOATING_PREVIEW_TEXT);

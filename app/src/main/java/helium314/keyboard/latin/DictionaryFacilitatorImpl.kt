@@ -573,6 +573,10 @@ class DictionaryFacilitatorImpl : DictionaryFacilitator {
         return isValidWord(word, DictionaryFacilitator.ALL_DICTIONARY_TYPES, dictionaryGroups[0])
     }
 
+    // ai-note: main dictionary accessor for the heatmap gesture lexicon (HeatmapLexiconTrie_v1).
+    override fun getMainDictionary(): Dictionary? =
+        dictionaryGroups[0].getDict(Dictionary.TYPE_MAIN)
+
     // todo: move into dictionaryGroup?
     private fun isValidWord(word: String, dictionariesToCheck: Array<String>, dictionaryGroup: DictionaryGroup): Boolean {
         if (word.isEmpty() || dictionaryGroup.isBlacklisted(word)) return false

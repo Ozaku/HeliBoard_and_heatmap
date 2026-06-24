@@ -1,0 +1,54 @@
+================================================================================
+MASTER PLAN v2 — incorporates maintainer decisions (2026-06-01)
+Supersedes strategic defaults in 00_MASTER_PLAN_v1.txt where they differ
+================================================================================
+
+TERMINOLOGY UPDATE
+  - "Naughty List" → **Common Typo List** (settings + docs)
+  - Swipe decode primary spec: 20_FEATURE_literal_swipe_dictionary_narrowing_v2.txt
+  - Glossary: 17_USER_DECISIONS_AND_GLOSSARY_v2.txt
+  - Settings hub: 18_SETTINGS_MENU_SPEC_v2.txt
+  - Answers: 16_OPEN_QUESTIONS_v2.txt
+
+--------------------------------------------------------------------------------
+CONFIRMED PHASE ORDER (user agrees)
+--------------------------------------------------------------------------------
+  Phase 1 — Instrumentation on phone (journal, swipe/tap traces, runnerUp, diffs)
+  Phase 2 — Heatmap persistence + weight layers (tap/swipe segregated)
+  Phase 3 — Common Typo List + settings category
+  Phase 4 — Literal dictionary-narrowing swipe engine (no swipe library)
+  Phase 5 — Optional tap/swipe key geometry (settings toggles)
+  Ongoing — Curve/loop learning enriches from corrections (not a one-shot v2 bolt-on)
+
+--------------------------------------------------------------------------------
+STRATEGY: MAXIMUM COMPATIBILITY
+--------------------------------------------------------------------------------
+  - Any installed HeliBoard main dictionary works as word source.
+  - No proprietary swypelibs requirement for end state.
+  - Tap path untouched early; swipe rebuilt behind existing glide toggle.
+  - Transition: log + optional re-rank legacy output until literal engine trusted.
+
+--------------------------------------------------------------------------------
+MULTI-LAYER LEARNING MEMORY (expanded)
+--------------------------------------------------------------------------------
+  Per word slot in paragraph window:
+    WordSession { slotId, swipeTrace, tapTrace, runnerUp[], committed, final }
+  Persistent aggregates:
+    letterHeat[mode][key], wordWeights, wordPairCorrections,
+    curveBucketStats, swipeAlignmentOffsets (finger vs key center per letter)
+  Common Typo List: hard pipeline block only; tap double-entry escape; unban keeps data
+
+--------------------------------------------------------------------------------
+OPEN ENGINEERING ITEMS (see 16 v2)
+--------------------------------------------------------------------------------
+  Runner-up strip UI default, learning speed constants, export backup, spell checker scope.
+
+--------------------------------------------------------------------------------
+SUCCESS CRITERIA (unchanged, reinforced)
+--------------------------------------------------------------------------------
+  User stops correcting same swipe paths over time; chronic typos never auto-return;
+  tap-after-swipe-delete flow recovers right word from almost-matches or allows new word.
+
+================================================================================
+END MASTER PLAN v2
+================================================================================

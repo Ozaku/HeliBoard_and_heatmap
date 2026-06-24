@@ -1,0 +1,58 @@
+================================================================================
+
+BUG: Live IME session always empty in Settings (beta 0.0.0.4)
+
+================================================================================
+
+
+
+SYMPTOM
+
+  Instrumentation status showed zeros under "Live IME session" after typing.
+
+
+
+ROOT CAUSE
+
+  1. Android IME (LatinIME) runs in a different process than SettingsActivity.
+
+     In-memory HeatmapWordSlotSession_v1 is always empty in the Settings process.
+
+  2. DeviceProtectedUtils caches SharedPreferences per process; Settings could read
+
+     stale snapshot/heartbeat even after IME wrote commits.
+
+
+
+FIX (beta 0.0.0.5)
+
+  - HeatmapCrossProcessPrefs_v1: fresh prefs read + commit() on IME writes.
+
+  - HeatmapInstrumentationSnapshot_v2: status shows "Last commit from IME" from prefs.
+
+  - Live section explains it cannot show live counters in Settings UI.
+
+  - Auto-refresh status when opening Heatmap Smart Keyboard screen.
+
+
+
+RETEST
+
+  1. installDebugNoMinify (beta 0.0.0.5)
+
+  2. Enable Heatmap KB (beta) — not store HeliBoard
+
+  3. Type several words with space in Gemini/Notes
+
+  4. Open Heatmap Smart Keyboard → Instrumentation status
+
+  5. Expect "Last commit from IME" with words > 0 and IME active line
+
+
+
+================================================================================
+
+END
+
+================================================================================
+

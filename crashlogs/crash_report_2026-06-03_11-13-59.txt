@@ -1,0 +1,170 @@
+
+Thread: main
+App version: 3.9
+Device: samsung a54x, Android 13
+Locale: en_US
+Stack trace:
+java.lang.IllegalArgumentException: Failed to find configured root that contains /data/user_de/0/helium314.keyboard.debug/files/heatmap_learning/session_export_latest.json
+	at androidx.core.content.FileProvider$SimplePathStrategy.getUriForFile(FileProvider.java:915)
+	at androidx.core.content.FileProvider.getUriForFile(FileProvider.java:418)
+	at helium314.keyboard.heatmap.learning.HeatmapExportShare_v1.shareLatest(HeatmapExportShare_v1.kt:29)
+	at helium314.keyboard.heatmap.learning.HeatmapWordSlotSession_v4.shareSessionExport(HeatmapWordSlotSession_v4.kt:435)
+	at helium314.keyboard.settings.screens.HeatmapSmartKeyboardScreenKt.createHeatmapSmartKeyboardSettings$lambda$1$4$0(HeatmapSmartKeyboardScreen.kt:140)
+	at helium314.keyboard.settings.screens.HeatmapSmartKeyboardScreenKt.$r8$lambda$Yf41IuWvYg215ZRGEymEMW2Oagw(Unknown Source:0)
+	at helium314.keyboard.settings.screens.HeatmapSmartKeyboardScreenKt$$ExternalSyntheticLambda9.invoke(D8$$SyntheticClass:0)
+	at helium314.keyboard.settings.preferences.PreferenceKt.Preference$lambda$0$0(Preference.kt:65)
+	at helium314.keyboard.settings.preferences.PreferenceKt.$r8$lambda$szDPcTFlQVwZOGRo2EbrR5vg4-Y(Unknown Source:0)
+	at helium314.keyboard.settings.preferences.PreferenceKt$$ExternalSyntheticLambda2.invoke(D8$$SyntheticClass:0)
+	at androidx.compose.foundation.ClickableNode.onPointerEvent-H0pRuoY(Clickable.kt:1009)
+	at androidx.compose.ui.input.pointer.Node.dispatchMainEventPass(HitPathTracker.kt:436)
+	at androidx.compose.ui.input.pointer.Node.dispatchMainEventPass(HitPathTracker.kt:422)
+	at androidx.compose.ui.input.pointer.Node.dispatchMainEventPass(HitPathTracker.kt:422)
+	at androidx.compose.ui.input.pointer.Node.dispatchMainEventPass(HitPathTracker.kt:422)
+	at androidx.compose.ui.input.pointer.Node.dispatchMainEventPass(HitPathTracker.kt:422)
+	at androidx.compose.ui.input.pointer.NodeParent.dispatchMainEventPass(HitPathTracker.kt:275)
+	at androidx.compose.ui.input.pointer.HitPathTracker.dispatchChanges(HitPathTracker.kt:171)
+	at androidx.compose.ui.input.pointer.PointerInputEventProcessor.process-BIzXfog(PointerInputEventProcessor.kt:118)
+	at androidx.compose.ui.platform.AndroidComposeView.sendMotionEvent-8iAsVTc(AndroidComposeView.android.kt:2428)
+	at androidx.compose.ui.platform.AndroidComposeView.handleMotionEvent-8iAsVTc(AndroidComposeView.android.kt:2378)
+	at androidx.compose.ui.platform.AndroidComposeView.dispatchTouchEvent(AndroidComposeView.android.kt:2249)
+	at android.view.ViewGroup.dispatchTransformedTouchEvent(ViewGroup.java:3316)
+	at android.view.ViewGroup.dispatchTouchEvent(ViewGroup.java:2990)
+	at android.view.ViewGroup.dispatchTransformedTouchEvent(ViewGroup.java:3316)
+	at android.view.ViewGroup.dispatchTouchEvent(ViewGroup.java:2990)
+	at android.view.ViewGroup.dispatchTransformedTouchEvent(ViewGroup.java:3316)
+	at android.view.ViewGroup.dispatchTouchEvent(ViewGroup.java:2990)
+	at android.view.ViewGroup.dispatchTransformedTouchEvent(ViewGroup.java:3316)
+	at android.view.ViewGroup.dispatchTouchEvent(ViewGroup.java:2990)
+	at com.android.internal.policy.DecorView.superDispatchTouchEvent(DecorView.java:1116)
+	at com.android.internal.policy.PhoneWindow.superDispatchTouchEvent(PhoneWindow.java:1971)
+	at android.app.Activity.dispatchTouchEvent(Activity.java:4388)
+	at com.android.internal.policy.DecorView.dispatchTouchEvent(DecorView.java:1074)
+	at android.view.View.dispatchPointerEvent(View.java:15803)
+	at android.view.ViewRootImpl$ViewPostImeInputStage.processPointerEvent(ViewRootImpl.java:8153)
+	at android.view.ViewRootImpl$ViewPostImeInputStage.onProcess(ViewRootImpl.java:7877)
+	at android.view.ViewRootImpl$InputStage.deliver(ViewRootImpl.java:7213)
+	at android.view.ViewRootImpl$InputStage.onDeliverToNext(ViewRootImpl.java:7270)
+	at android.view.ViewRootImpl$InputStage.forward(ViewRootImpl.java:7236)
+	at android.view.ViewRootImpl$AsyncInputStage.forward(ViewRootImpl.java:7434)
+	at android.view.ViewRootImpl$InputStage.apply(ViewRootImpl.java:7244)
+	at android.view.ViewRootImpl$AsyncInputStage.apply(ViewRootImpl.java:7491)
+	at android.view.ViewRootImpl$InputStage.deliver(ViewRootImpl.java:7217)
+	at android.view.ViewRootImpl$InputStage.onDeliverToNext(ViewRootImpl.java:7270)
+	at android.view.ViewRootImpl$InputStage.forward(ViewRootImpl.java:7236)
+	at android.view.ViewRootImpl$InputStage.apply(ViewRootImpl.java:7244)
+	at android.view.ViewRootImpl$InputStage.deliver(ViewRootImpl.java:7217)
+	at android.view.ViewRootImpl.deliverInputEvent(ViewRootImpl.java:10788)
+	at android.view.ViewRootImpl.doProcessInputEvents(ViewRootImpl.java:10676)
+	at android.view.ViewRootImpl.enqueueInputEvent(ViewRootImpl.java:10632)
+	at android.view.ViewRootImpl$WindowInputEventReceiver.onInputEvent(ViewRootImpl.java:10926)
+	at android.view.InputEventReceiver.dispatchInputEvent(InputEventReceiver.java:285)
+	at android.os.MessageQueue.nativePollOnce(Native Method)
+	at android.os.MessageQueue.next(MessageQueue.java:335)
+	at android.os.Looper.loopOnce(Looper.java:186)
+	at android.os.Looper.loop(Looper.java:313)
+	at android.app.ActivityThread.main(ActivityThread.java:8762)
+	at java.lang.reflect.Method.invoke(Native Method)
+	at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:604)
+	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:1067)
+
+Last log:
+2026-06-03 11:13:17.867751 D InputLogic: performUpdateSuggestionStripSync() : 42 ms to finish
+2026-06-03 11:13:17.867912 D InputLogic: commitChosenWord() : [fucking]
+2026-06-03 11:13:17.868128 D InputLogic: commitChosenWord() : 0 ms to run SuggestionSpanUtils.getTextWithSuggestionSpan()
+2026-06-03 11:13:17.868340 D InputLogic: commitChosenWord() : 0 ms to run Connection.getNgramContextFromNthPreviousWord()
+2026-06-03 11:13:17.868412 D InputLogic: commitChosenWord() : NgramContext = PrevWord[0]: its, isBeginningOfSentence: false. PrevWord[1]: cause, isBeginningOfSentence: false. PrevWord[2]: everywhere, isBeginningOfSentence: false. 
+2026-06-03 11:13:17.868461 D RichInputConnection: committing 7 characters
+2026-06-03 11:13:17.868735 D InputLogic: commitChosenWord() : 0 ms to run Connection.commitText
+2026-06-03 11:13:17.869131 D InputLogic: commitChosenWord() : 0 ms to run performAdditionToUserHistoryDictionary()
+2026-06-03 11:13:17.873392 I Settings: loadSettings
+2026-06-03 11:13:17.876775 I Settings: loadSettings
+2026-06-03 11:13:17.879715 I Settings: loadSettings
+2026-06-03 11:13:17.882274 I Settings: loadSettings
+2026-06-03 11:13:17.884740 I Settings: loadSettings
+2026-06-03 11:13:17.887238 I Settings: loadSettings
+2026-06-03 11:13:17.889941 I Settings: loadSettings
+2026-06-03 11:13:17.892714 I Settings: loadSettings
+2026-06-03 11:13:17.895782 I HeatmapInstr: commit WordSlot#17 host=com.google.android.apps.translate tap decided committed=fucking route=heliboard-ac ime=helium314.keyboard.debug beta=0.0.0.13 journal=111/3000
+2026-06-03 11:13:17.895989 D HeatmapWordSlot: committed WordSession_v2(slotId=WordSlot#17, sessionGeneration=3, hostPackage=com.google.android.apps.translate, inputMode=TAP, commitType=DECIDED, committedText=fucking, finalText=fucking, typedText=fucking, separatorCharCount=1, committedAtMs=1780503197869, swipeTracePointCount=0, tapKeyCount=0, runnerUpWords=[]) journal=111/3000 entries=17
+2026-06-03 11:13:17.903078 I Settings: loadSettings
+2026-06-03 11:13:17.905384 I Settings: loadSettings
+2026-06-03 11:13:17.907493 I HeatmapInstr: export latest /data/user_de/0/helium314.keyboard.debug/files/heatmap_learning/session_export_latest.json bytes=9187
+2026-06-03 11:13:17.907604 D InputLogic: commitChosenWord() : 38 ms to run WordComposer.commitWord()
+2026-06-03 11:13:17.907711 D RichInputConnection: committing 1 characters
+2026-06-03 11:13:17.917022 I LatinIME: onUpdateSelection: oss=94, ose=94, nss=95, nse=95, cs=-1, ce=-1
+2026-06-03 11:13:18.009316 D InputLogic: performUpdateSuggestionStripSync()
+2026-06-03 11:13:18.015935 D InputLogic: performUpdateSuggestionStripSync() : 6 ms to finish
+2026-06-03 11:13:18.434586 D HeatmapWordSlot: composing started WordSlot#18
+2026-06-03 11:13:18.434984 D RichInputConnection: setting composing text of length 1
+2026-06-03 11:13:18.443885 I LatinIME: onUpdateSelection: oss=95, ose=95, nss=96, nse=96, cs=95, ce=96
+2026-06-03 11:13:18.535751 D InputLogic: performUpdateSuggestionStripSync()
+2026-06-03 11:13:18.573356 D InputLogic: performUpdateSuggestionStripSync() : 38 ms to finish
+2026-06-03 11:13:18.574673 D HeatmapWordSlot: composing started WordSlot#18
+2026-06-03 11:13:18.574793 D RichInputConnection: setting composing text of length 2
+2026-06-03 11:13:18.581213 I LatinIME: onUpdateSelection: oss=96, ose=96, nss=97, nse=97, cs=95, ce=97
+2026-06-03 11:13:18.676142 D InputLogic: performUpdateSuggestionStripSync()
+2026-06-03 11:13:18.702020 D AutoCorrectionUtils: Normalized ba,back,237309, 0.1186545 (0.1877951)
+2026-06-03 11:13:18.703845 D InputLogic: performUpdateSuggestionStripSync() : 28 ms to finish
+2026-06-03 11:13:18.773062 D PointerTracker: [0] isMajorEnoughMoveToBeOnNewKey: 0.39 key width from key edge
+2026-06-03 11:13:18.776387 D HeatmapWordSlot: composing started WordSlot#18
+2026-06-03 11:13:18.776686 D RichInputConnection: setting composing text of length 3
+2026-06-03 11:13:18.783557 I LatinIME: onUpdateSelection: oss=97, ose=97, nss=98, nse=98, cs=95, ce=98
+2026-06-03 11:13:18.877768 D InputLogic: performUpdateSuggestionStripSync()
+2026-06-03 11:13:18.909714 D InputLogic: performUpdateSuggestionStripSync() : 32 ms to finish
+2026-06-03 11:13:19.405636 D InputLogic: commitChosenWord() : [bad]
+2026-06-03 11:13:19.405987 D InputLogic: commitChosenWord() : 0 ms to run SuggestionSpanUtils.getTextWithSuggestionSpan()
+2026-06-03 11:13:19.406296 D InputLogic: commitChosenWord() : 1 ms to run Connection.getNgramContextFromNthPreviousWord()
+2026-06-03 11:13:19.406440 D InputLogic: commitChosenWord() : NgramContext = PrevWord[0]: fucking, isBeginningOfSentence: false. PrevWord[1]: its, isBeginningOfSentence: false. PrevWord[2]: cause, isBeginningOfSentence: false. 
+2026-06-03 11:13:19.406518 D RichInputConnection: committing 3 characters
+2026-06-03 11:13:19.406805 D InputLogic: commitChosenWord() : 0 ms to run Connection.commitText
+2026-06-03 11:13:19.407334 D InputLogic: commitChosenWord() : 1 ms to run performAdditionToUserHistoryDictionary()
+2026-06-03 11:13:19.411293 I Settings: loadSettings
+2026-06-03 11:13:19.413499 I Settings: loadSettings
+2026-06-03 11:13:19.415519 I Settings: loadSettings
+2026-06-03 11:13:19.418110 I Settings: loadSettings
+2026-06-03 11:13:19.420316 I Settings: loadSettings
+2026-06-03 11:13:19.422618 I Settings: loadSettings
+2026-06-03 11:13:19.424623 I Settings: loadSettings
+2026-06-03 11:13:19.426381 I Settings: loadSettings
+2026-06-03 11:13:19.428309 I HeatmapInstr: commit WordSlot#18 host=com.google.android.apps.translate tap decided committed=bad route=heliboard-ac ime=helium314.keyboard.debug beta=0.0.0.13 journal=115/3000
+2026-06-03 11:13:19.428422 D HeatmapWordSlot: committed WordSession_v2(slotId=WordSlot#18, sessionGeneration=3, hostPackage=com.google.android.apps.translate, inputMode=TAP, commitType=DECIDED, committedText=bad, finalText=bad, typedText=bad, separatorCharCount=1, committedAtMs=1780503199407, swipeTracePointCount=0, tapKeyCount=0, runnerUpWords=[]) journal=115/3000 entries=18
+2026-06-03 11:13:19.432621 I Settings: loadSettings
+2026-06-03 11:13:19.435346 I Settings: loadSettings
+2026-06-03 11:13:19.438329 I HeatmapInstr: export latest /data/user_de/0/helium314.keyboard.debug/files/heatmap_learning/session_export_latest.json bytes=9639
+2026-06-03 11:13:19.438493 D InputLogic: commitChosenWord() : 31 ms to run WordComposer.commitWord()
+2026-06-03 11:13:19.438653 D RichInputConnection: committing 1 characters
+2026-06-03 11:13:19.442717 I LatinIME: onUpdateSelection: oss=98, ose=98, nss=99, nse=99, cs=-1, ce=-1
+2026-06-03 11:13:19.540064 D InputLogic: performUpdateSuggestionStripSync()
+2026-06-03 11:13:19.544452 D InputLogic: performUpdateSuggestionStripSync() : 5 ms to finish
+2026-06-03 11:13:22.205817 I LatinIME: hideWindow
+2026-06-03 11:13:22.206237 I LatinIME: onFinishInputView
+2026-06-03 11:13:22.209590 I Settings: loadSettings
+2026-06-03 11:13:22.212582 I Settings: loadSettings
+2026-06-03 11:13:22.214500 I Settings: loadSettings
+2026-06-03 11:13:22.216375 I HeatmapInstr: fieldDiff stub changed fp=536232391 pendingFinalText=18 before=99 after=0
+2026-06-03 11:13:22.219449 I Settings: loadSettings
+2026-06-03 11:13:22.222737 I Settings: loadSettings
+2026-06-03 11:13:22.232222 I Settings: loadSettings
+2026-06-03 11:13:22.240861 I HeatmapInstr: flush FIELD_BLUR host=com.google.android.apps.translate gen=3 journalWords=18 sessions=18
+2026-06-03 11:13:22.292327 I Settings: loadSettings
+2026-06-03 11:13:22.304267 I Settings: loadSettings
+2026-06-03 11:13:22.319162 I HeatmapInstr: export latest /data/user_de/0/helium314.keyboard.debug/files/heatmap_learning/session_export_latest.json bytes=9659
+2026-06-03 11:13:22.322651 I LatinIME: onWindowHidden
+2026-06-03 11:13:22.348983 I LatinIME: onFinishInput
+2026-06-03 11:13:23.003178 I LatinIME: onFinishInput
+2026-06-03 11:13:24.958437 I LatinIME: onFinishInput
+2026-06-03 11:13:49.287673 I Settings: loadSettings
+2026-06-03 11:13:49.292432 I HeatmapInstr: fieldDiff stub skip=no_connection pendingFinalText=18
+2026-06-03 11:13:49.295493 I Settings: loadSettings
+2026-06-03 11:13:49.299006 I Settings: loadSettings
+2026-06-03 11:13:49.301651 I Settings: loadSettings
+2026-06-03 11:13:49.304466 I HeatmapInstr: flush MANUAL_DEBUG host=com.google.android.apps.translate gen=3 journalWords=18 sessions=18
+2026-06-03 11:13:49.310265 I Settings: loadSettings
+2026-06-03 11:13:49.312627 I Settings: loadSettings
+2026-06-03 11:13:49.314605 I HeatmapInstr: export latest /data/user_de/0/helium314.keyboard.debug/files/heatmap_learning/session_export_latest.json bytes=9651
+2026-06-03 11:13:50.875990 I HeatmapInstr: fieldDiff stub skip=no_connection pendingFinalText=18
+2026-06-03 11:13:50.880685 I Settings: loadSettings
+2026-06-03 11:13:50.885340 I Settings: loadSettings
+2026-06-03 11:13:50.888876 I HeatmapInstr: flush MANUAL_DEBUG host=com.google.android.apps.translate gen=3 journalWords=18 sessions=18
+2026-06-03 11:13:50.896184 I Settings: loadSettings
+2026-06-03 11:13:50.898647 I HeatmapInstr: export latest /data/user_de/0/helium314.keyboard.debug/files/heatmap_learning/session_export_latest.json bytes=9651

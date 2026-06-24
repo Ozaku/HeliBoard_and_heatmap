@@ -13,6 +13,8 @@ public final class DebugSettings {
     public static final String PREF_DEBUG_MODE = "debug_mode";
     public static final String PREF_FORCE_NON_DISTINCT_MULTITOUCH = "force_non_distinct_multitouch";
     public static final String PREF_SLIDING_KEY_INPUT_PREVIEW = "sliding_key_input_preview";
+    /** Read-only status for heatmap learning instrumentation (WordSlot step 1). */
+    public static final String PREF_HEATMAP_LEARNING_STATUS = "heatmap_learning_status";
     public static final String PREF_SHOW_DEBUG_SETTINGS = "show_debug_settings";
     public static final String PREF_KEY_DUMP_DICT_PREFIX = "dump_dictionaries";
 

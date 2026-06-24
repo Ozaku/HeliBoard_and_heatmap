@@ -1,0 +1,140 @@
+================================================================================
+FEATURE 1 (v2) — LITERAL SWIPE ENGINE + PROGRESSIVE DICTIONARY NARROWING
+Replaces/extends 10_FEATURE_swipe_three_signal_decoder_v1.txt as primary decode spec
+User walkthrough: STARTING example (2026-06-01)
+================================================================================
+
+DESIGN GOAL
+  As literal as possible: each stroke segment updates an active candidate set from
+  the installed main dictionary (Patricia trie / BinaryDictionary — same as HeliBoard).
+  No separate "swipe dictionary." Heatmap + user curve stats break ties later.
+
+--------------------------------------------------------------------------------
+CORE ALGORITHM (incremental prefix search)
+--------------------------------------------------------------------------------
+
+State during one gesture:
+  activePrefixes: Set<String>     // dictionary words matching path so far
+  runnerUp: List<ScoredWord>      // recently eliminated but remembered (decay score)
+  pathLetters: List<KeyHypothesis>  // committed letters from geometry
+  pendingCurve: CurveSegment?     // unresolved curve region
+
+On finger DOWN at key K0:
+  activePrefixes = all dictionary words with first letter = label(K0)
+  pathLetters = [K0]
+
+On each SEGMENT (straight line, corner, or curve chunk):
+  1. Infer next letter hypothesis L from geometry (see GEOMETRY RULES).
+  2. Extend path: candidatePrefix = concat(pathLetters, L)
+  3. activePrefixes = { w in Dictionary | w starts with candidatePrefix
+                       OR w has prefix within edit distance 1 if near-miss }
+  4. If activePrefixes empty:
+       - Try near-key vowel / heatmap favored alternates (STA from S+loop near A).
+       - If still empty, mark segment "unresolved" and hold runnerUp from before.
+  5. Prune: drop prefixes with frequency/score below threshold vs top cluster.
+  6. runnerUp += pruned prefixes with attached partial path snapshot.
+
+On finger UP at key K_end:
+  Final filter: words ending with label(K_end) intersect activePrefixes.
+  Pick highest score; commit if confidence > threshold else show strip choices.
+
+--------------------------------------------------------------------------------
+USER STARTING EXAMPLE (annotated)
+--------------------------------------------------------------------------------
+
+> user starts on S
+  activePrefixes = all words beginning with "s" (huge set — only filter first letter)
+
+> straight line to T before direction change
+  pathLetters = S,T → prefix "st"
+  activePrefixes = words starting with "st"
+
+> swipes back toward S on left edge (near vowel A, possible miss)
+  Geometry: backward stroke near A — not a clean second S for dictionary "sts"
+  Dictionary: no useful "sts*" → reject double-S interpretation
+  Near-miss rule: proximity to A + empty sts* → insert A → "sta"
+  activePrefixes = words starting with "sta"
+
+> straight line to R
+  pathLetters += R → "star"
+  activePrefixes = star*, stat*, staf* (frequency + heatmap rank star > stat > staf)
+
+> short down-right from R to T
+  pathLetters += T → "start"
+  Prune staf*, stat* if path strongly favors START cluster
+  activePrefixes = start*
+
+> swipe to gap between U and I, closer to U
+  No "startu*" in dict → treat as near-miss toward I path
+  Hypothesis prefix "starti" (incomplete word — composing state)
+  runnerUp remembers: staring, stating, staying, starring (lower score)
+
+> swipe to N
+  Likely "startin*" cluster → starting, starring dominate
+  Retain runnerUp list tied to swipe signature so far
+
+> swipe between F and G
+  "startinf" invalid → dictionary confirms "starting" as best complete match
+  Commit "starting" to text field when confidence sufficient
+
+KEY TAKEAWAY
+  Dictionary is the authority for what exists; geometry proposes letters; heatmap
+  picks among near keys; runnerUp preserves alternates for corrections and tap-fix.
+
+--------------------------------------------------------------------------------
+GEOMETRY RULES (literal first)
+--------------------------------------------------------------------------------
+
+STRAIGHT SEGMENT
+  Sample keys whose centers are nearest to segment polyline (tight threshold, not
+  full legacy proximity cloud). Direction stable → one letter per segment.
+
+CORNER (sharp direction change)
+  Point of max curvature / angle > θ → new letter at nearest key to bend.
+
+CURVE (gradual direction change)
+  Multiple micro-letters possible OR one letter for whole curve — disambiguate by:
+    (a) dictionary narrowing success
+    (b) user-learned curve templates (Feature 2/3)
+  User note: curves ESPECIALLY need personal learning.
+
+START / END ANCHORS
+  Always snap first touch and last touch to key centers (precise data points stored
+  in session for heatmap alignment per letter).
+
+NEAR-MISS BETWEEN KEYS
+  When prefix fails dictionary lookup, try keys within distance d of stroke point,
+  ordered by: heatmap bias > physical distance > language model frequency.
+
+--------------------------------------------------------------------------------
+ALMOST-MATCHES (runner-up memory)
+--------------------------------------------------------------------------------
+  For each swipe session store top K (e.g. 8–16) partial/full words with:
+    - prefix at time of pruning
+    - score
+    - simplified stroke signature hash
+  Used when:
+    - User deletes swipe word and tap-types — compare tap to runnerUp
+    - User picks alternate from strip
+    - Training links swipe geometry → correct word
+
+--------------------------------------------------------------------------------
+DICTIONARY SOURCE
+--------------------------------------------------------------------------------
+  Use HeliBoard's existing main dictionary for locale (binary trie on disk).
+  User-installed/custom dictionaries use same lookup APIs.
+  User dictionary / history: optional boost, not required for narrowing to function.
+
+--------------------------------------------------------------------------------
+COMPATIBILITY WITH OLD NATIVE PATH
+--------------------------------------------------------------------------------
+  Until literal engine ships:
+    - Instrumentation records our parallel decode prediction vs native output.
+    - Optional: show debug diff on developer setting.
+  After literal engine ships:
+    - Disable reliance on GestureSuggestPolicyFactory external registration.
+    - ProximityInfo may remain for tap typing only or tight swipe helper.
+
+================================================================================
+END literal swipe v2
+================================================================================

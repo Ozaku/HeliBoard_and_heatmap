@@ -1,0 +1,149 @@
+================================================================================
+IMPLEMENTATION GUIDE — How swipe works today & build options (Feature 6) v1
+Audience: future AI agents + maintainer; planning reference only
+Related: 04_swipe_gesture_input.md, 03_autocorrect_and_suggestions.md
+================================================================================
+
+This document answers: "Swipes are tricky — how does it work now, and what can we
+do?" It turns user intent into actionable engineering forks without writing code yet.
+
+--------------------------------------------------------------------------------
+PART 1 — END-TO-END SWIPE PATH (HeliBoard / AOSP LatinIME heritage)
+--------------------------------------------------------------------------------
+
+1) User touches keyboard
+   PointerTracker tracks coordinates, decides tap vs gesture (sInGesture).
+
+2) Gesture enabled?
+   GestureEnabler: main dictionary loaded + user setting + not password field.
+
+3) Stroke sampling
+   GestureStrokeRecognitionPoints + params thin the stream.
+   BatchInputArbiter packs events into InputPointers (x, y, time arrays).
+
+4) Word composition
+   WordComposer.isBatchMode = true; pointers sent to suggest pipeline.
+
+5) Suggestion request (background thread)
+   InputLogicHandler → Suggest.getSuggestedWordsForBatchInput
+   Session id: SESSION_ID_GESTURE (distinct from tap session).
+
+6) Dictionary query
+   DictionaryFacilitatorImpl queries main + user + history + contacts (as enabled).
+   BinaryDictionary.getSuggestions JNI call with ComposedData.mIsBatchMode = true.
+
+7) Native spatial model
+   ProximityInfo: precomputed grid — each touch cell maps to NEARBY key letters.
+   Stroke does not mean "finger was on key K" only "stroke passed near K".
+
+8) Native decode
+   suggest.cpp traverses dictionary trie with gesture policy + proximity.
+   PROBLEM: GestureSuggestPolicyFactory::sGestureSuggestFactoryMethod may be NULL
+   in open-source build → gesture scoring incomplete unless:
+     - User loads swypelibs via LoadGestureLibPreference, OR
+     - Device provides jni_latinimegoogle, OR
+     - We implement our own policy in-tree.
+
+9) Kotlin policy layer
+   Suggest filters garbage suggestions for gesture on some dicts.
+   Strip shows candidates; user picks or accepts top word on lift.
+
+10) Commit
+    Word committed to field; PersonalizationHelper may add to UserHistoryDictionary.
+
+USER'S DESIRED PATH diverges at steps 7–8: use first key + path corners + last key
+and dictionary alignment, then heatmap tie-break — not broad proximity soup.
+
+--------------------------------------------------------------------------------
+PART 2 — WHY ROWS APPEAR THAT FINGER "NEVER CROSSED"
+--------------------------------------------------------------------------------
+  Not a single bug — design of proximity + language model frequency:
+  - Stroke passes between rows → multiple row keys marked "near".
+  - Higher-frequency words containing those letters win beam search.
+  User fix requires tighter spatial model OR different search algorithm (Feature 1).
+
+--------------------------------------------------------------------------------
+PART 3 — STRATEGY OPTIONS (pick one primary for Phase 4)
+--------------------------------------------------------------------------------
+
+STRATEGY 1 — OPEN-SOURCE GESTURE POLICY (native, "right" long-term)
+  Implement GestureSuggestPolicy in app/src/main/jni/.../gesture/
+  Register factory at lib load (mirror how external swypelibs registers).
+  Pros: full control, one scoring path, best latency.
+  Cons: C++ complexity, must understand trie + policy interfaces.
+  Best when: committed to maintaining native fork.
+
+STRATEGY 2 — TIGHTEN PROXIMITY ONLY (native, smaller change)
+  Modify proximity_info.cpp to reduce neighbor radius / row leakage.
+  Still use existing gesture policy when available.
+  Pros: smaller diff, may help row-skipping quickly.
+  Cons: does not implement corner/loop logic; may hurt valid sloppy swipes.
+
+STRATEGY 3 — KOTLIN POST-RANKING (Java/Kotlin layer)
+  Let native return top 20; re-score with three-signal + heatmap in Suggest.kt.
+  Pros: fast iteration, easy logging, works even if gesture policy null.
+  Cons: cannot fix wrong letters native never proposes; CPU on large candidate sets.
+
+STRATEGY 4 — HYBRID (recommended phased approach)
+  Phase 1–3: Strategy 3 + journal/heatmap (ship learning early).
+  Phase 4: Strategy 1 embedded decode + Strategy 2 tuned proximity.
+  Keeps product moving while native rewrite proceeds.
+
+STRATEGY 5 — EXTERNAL LIB DEPENDENCY (status quo)
+  Continue relying on user-imported swypelibs / Google lib.
+  Pros: none for fork mission.
+  Cons: proprietary, checksum fragility, misaligned with heatmap vision.
+  Not recommended as end state.
+
+--------------------------------------------------------------------------------
+PART 4 — AUTOCORRECT INTEGRATION POINTS FOR HEATMAP
+--------------------------------------------------------------------------------
+  Tap autocorrect decision: Suggest.shouldBeAutoCorrected + AutoCorrectionUtils.
+  Injection points (future):
+    A) After native returns SuggestionResults — adjust scores in facilitator merge.
+    B) Inside shouldBeAutoCorrected — use wordWeight + naughty state.
+    C) Native typing_scoring — add bias table pointer (fastest at scale).
+
+  Order of effort: A → B → C.
+
+--------------------------------------------------------------------------------
+PART 5 — INSTRUMENTATION FIRST (what to log before changing decode)
+--------------------------------------------------------------------------------
+  Debug build flags (conceptual):
+    - LOG_GESTURE: K0, K_end, corner list, native top5, post-rank top5
+    - LOG_CORRECTION: word pair, mode, key deltas
+  Compare logs on device with user test phrases:
+    PAUSE, PHASE, PLASTIC, plus user's real failure cases.
+
+--------------------------------------------------------------------------------
+PART 6 — ALTERNATIVE ALGORITHMS BIBLIOGRAPHY (local, classical)
+--------------------------------------------------------------------------------
+  - Key sequence from stroke + Viterbi on keyboard graph (classical gesture typing)
+  - Shape writing / template matching per word (higher storage)
+  - Weighted edit distance between key sequence and dictionary word
+  - n-gram language model already in binary dict — keep it, don't replace with AI
+
+--------------------------------------------------------------------------------
+PART 7 — FILES TO READ BEFORE FIRST CODE CHANGE
+--------------------------------------------------------------------------------
+  Must read:
+    04_swipe_gesture_input.md, 03_autocorrect_and_suggestions.md
+    PointerTracker.java, BatchInputArbiter.java, Suggest.kt (batch branch)
+    ProximityInfo.java, proximity_info.cpp
+    gesture_suggest_policy_factory.cpp, dictionary.cpp (gesture factory comment)
+  Nice to have:
+    GestureDataGatheringSettings.kt, GestureDataDao.kt
+    PersonalizationHelper.java, UserHistoryDictionary.java
+
+--------------------------------------------------------------------------------
+PART 8 — DELIVERABLES CHECKLIST BEFORE TOUCHING app/ CODE
+--------------------------------------------------------------------------------
+  [ ] User answers 16_OPEN_QUESTIONS_v1.txt
+  [ ] Choose Strategy 1–4 primary
+  [ ] Agree paragraph window default + ban thresholds
+  [ ] Confirm ban blocks swipe/autocorrect only vs literal typing
+  [ ] Device test matrix (at least 1 phone, 1 layout, English main dict)
+
+================================================================================
+END IMPLEMENTATION GUIDE v1
+================================================================================

@@ -1,0 +1,392 @@
+﻿{
+  "schemaVersion": 1,
+  "exportedAtMs": 1781299453911,
+  "exportSource": "ime_commit",
+  "build": {
+    "beta": "0.0.0.28",
+    "roadmapStep": 15,
+    "statusLine": "Heatmap learning beta 0.0.0.28 (roadmap step 15)"
+  },
+  "settings": {
+    "learningEnabled": true,
+    "paragraphWindowChars": 3000,
+    "tapHeatmapAutocorrect": true,
+    "swipeHeatmapAutocorrect": true,
+    "autoFileDump": false
+  },
+  "instrumentation": {
+    "lifetimeCommits": 444,
+    "lastFlushReason": "HOST_CHANGED",
+    "lastFlushHost": "com.anthropic.claude",
+    "totalFlushes": 166,
+    "selectionEditEvents": 175,
+    "pendingFinalTextSync": 0,
+    "lastFieldProbe": "skip=no_connection",
+    "snapshotBeta": "0.0.0.28",
+    "snapshotJournalChars": 88,
+    "snapshotJournalWords": 17,
+    "snapshotLastWord": "degree",
+    "snapshotHostPackage": "com.anthropic.claude"
+  },
+  "metrics": {
+    "commitCount": 443,
+    "commitLastMs": 52,
+    "commitAvgMs": 53,
+    "commitMaxMs": 101,
+    "commitP95Ms": 63,
+    "heapUsedMbAtFlush": 7,
+    "heapMaxMbAtFlush": 256,
+    "prefixBranchStubCount": 0
+  },
+  "learningStore": {
+    "schemaVersion": 4,
+    "dbPath": "\/data\/user\/0\/helium314.keyboard.debug\/files\/heatmap_learning\/heatmap_store.db",
+    "persistedCommitCount": 444,
+    "keyStatRows": 34,
+    "wordPairRows": 360,
+    "layoutHash": "lh_efffa97086f33f4d8af32aa512eff7cf96d242b177cc64fe9aae0b391aeff3ff",
+    "localeTag": "en-US",
+    "keyBoundsRows": 26,
+    "pathBucketRows": 13,
+    "alignmentOffsetRows": 22,
+    "letterConfusionRows": 5,
+    "wordCorrectionRows": 5
+  },
+  "wordSessions": [
+    {
+      "slotId": 1,
+      "sessionGeneration": 2,
+      "hostPackage": "com.anthropic.claude",
+      "inputMode": "TAP",
+      "commitType": "DECIDED",
+      "committedText": "I",
+      "finalText": "I",
+      "typedText": "I",
+      "separatorCharCount": 0,
+      "committedAtMs": 1781299384947,
+      "swipeTracePointCount": 0,
+      "tapKeyCount": 0
+    },
+    {
+      "slotId": 2,
+      "sessionGeneration": 2,
+      "hostPackage": "com.anthropic.claude",
+      "inputMode": "SWIPE",
+      "commitType": "DECIDED",
+      "committedText": "jury",
+      "finalText": "jury",
+      "typedText": "jury",
+      "separatorCharCount": 1,
+      "committedAtMs": 1781299386791,
+      "swipeTracePointCount": 35,
+      "tapKeyCount": 0
+    },
+    {
+      "slotId": 3,
+      "sessionGeneration": 2,
+      "hostPackage": "com.anthropic.claude",
+      "inputMode": "TAP",
+      "commitType": "DECIDED",
+      "committedText": "just",
+      "finalText": "just",
+      "typedText": "just",
+      "separatorCharCount": 1,
+      "committedAtMs": 1781299388525,
+      "swipeTracePointCount": 0,
+      "tapKeyCount": 0
+    },
+    {
+      "slotId": 4,
+      "sessionGeneration": 2,
+      "hostPackage": "com.anthropic.claude",
+      "inputMode": "SWIPE",
+      "commitType": "DECIDED",
+      "committedText": "got",
+      "finalText": "got",
+      "typedText": "got",
+      "separatorCharCount": 1,
+      "committedAtMs": 1781299390324,
+      "swipeTracePointCount": 26,
+      "tapKeyCount": 0
+    },
+    {
+      "slotId": 5,
+      "sessionGeneration": 2,
+      "hostPackage": "com.anthropic.claude",
+      "inputMode": "SWIPE",
+      "commitType": "USER_TYPED",
+      "committedText": "the",
+      "finalText": "the",
+      "typedText": "the",
+      "separatorCharCount": 0,
+      "committedAtMs": 1781299391696,
+      "swipeTracePointCount": 18,
+      "tapKeyCount": 0
+    },
+    {
+      "slotId": 6,
+      "sessionGeneration": 2,
+      "hostPackage": "com.anthropic.claude",
+      "inputMode": "SWIPE",
+      "commitType": "USER_TYPED",
+      "committedText": "swipe",
+      "finalText": "swipe",
+      "typedText": "swipe",
+      "separatorCharCount": 0,
+      "committedAtMs": 1781299403266,
+      "swipeTracePointCount": 74,
+      "tapKeyCount": 0
+    },
+    {
+      "slotId": 7,
+      "sessionGeneration": 2,
+      "hostPackage": "com.anthropic.claude",
+      "inputMode": "SWIPE",
+      "commitType": "USER_TYPED",
+      "committedText": "typing",
+      "finalText": "typing",
+      "typedText": "typing",
+      "separatorCharCount": 0,
+      "committedAtMs": 1781299404761,
+      "swipeTracePointCount": 56,
+      "tapKeyCount": 0
+    },
+    {
+      "slotId": 8,
+      "sessionGeneration": 2,
+      "hostPackage": "com.anthropic.claude",
+      "inputMode": "SWIPE",
+      "commitType": "USER_TYPED",
+      "committedText": "to",
+      "finalText": "to",
+      "typedText": "to",
+      "separatorCharCount": 0,
+      "committedAtMs": 1781299405311,
+      "swipeTracePointCount": 13,
+      "tapKeyCount": 0
+    },
+    {
+      "slotId": 9,
+      "sessionGeneration": 2,
+      "hostPackage": "com.anthropic.claude",
+      "inputMode": "SWIPE",
+      "commitType": "MANUAL_PICK",
+      "committedText": "work",
+      "finalText": "work",
+      "typedText": "wool",
+      "separatorCharCount": 0,
+      "committedAtMs": 1781299407241,
+      "swipeTracePointCount": 34,
+      "tapKeyCount": 0
+    },
+    {
+      "slotId": 10,
+      "sessionGeneration": 2,
+      "hostPackage": "com.anthropic.claude",
+      "inputMode": "SWIPE",
+      "commitType": "USER_TYPED",
+      "committedText": "It's",
+      "finalText": "It's",
+      "typedText": "It's",
+      "separatorCharCount": 0,
+      "committedAtMs": 1781299412678,
+      "swipeTracePointCount": 24,
+      "tapKeyCount": 0
+    },
+    {
+      "slotId": 11,
+      "sessionGeneration": 2,
+      "hostPackage": "com.anthropic.claude",
+      "inputMode": "SWIPE",
+      "commitType": "USER_TYPED",
+      "committedText": "already",
+      "finalText": "already",
+      "typedText": "already",
+      "separatorCharCount": 0,
+      "committedAtMs": 1781299419877,
+      "swipeTracePointCount": 79,
+      "tapKeyCount": 0
+    },
+    {
+      "slotId": 12,
+      "sessionGeneration": 2,
+      "hostPackage": "com.anthropic.claude",
+      "inputMode": "SWIPE",
+      "commitType": "MANUAL_PICK",
+      "committedText": "function",
+      "finalText": "function",
+      "typedText": "ft",
+      "separatorCharCount": 0,
+      "committedAtMs": 1781299428665,
+      "swipeTracePointCount": 131,
+      "tapKeyCount": 0
+    },
+    {
+      "slotId": 13,
+      "sessionGeneration": 2,
+      "hostPackage": "com.anthropic.claude",
+      "inputMode": "TAP",
+      "commitType": "DECIDED",
+      "committedText": "functionally",
+      "finalText": "functionally",
+      "typedText": "functionally",
+      "separatorCharCount": 1,
+      "committedAtMs": 1781299432349,
+      "swipeTracePointCount": 0,
+      "tapKeyCount": 0
+    },
+    {
+      "slotId": 14,
+      "sessionGeneration": 2,
+      "hostPackage": "com.anthropic.claude",
+      "inputMode": "TAP",
+      "commitType": "DECIDED",
+      "committedText": "accurate",
+      "finalText": "accurate",
+      "typedText": "accurate",
+      "separatorCharCount": 1,
+      "committedAtMs": 1781299445848,
+      "swipeTracePointCount": 0,
+      "tapKeyCount": 0
+    },
+    {
+      "slotId": 15,
+      "sessionGeneration": 2,
+      "hostPackage": "com.anthropic.claude",
+      "inputMode": "TAP",
+      "commitType": "DECIDED",
+      "committedText": "to",
+      "finalText": "to",
+      "typedText": "to",
+      "separatorCharCount": 1,
+      "committedAtMs": 1781299447674,
+      "swipeTracePointCount": 0,
+      "tapKeyCount": 0
+    },
+    {
+      "slotId": 16,
+      "sessionGeneration": 2,
+      "hostPackage": "com.anthropic.claude",
+      "inputMode": "TAP",
+      "commitType": "DECIDED",
+      "committedText": "a",
+      "finalText": "a",
+      "typedText": "a",
+      "separatorCharCount": 1,
+      "committedAtMs": 1781299448257,
+      "swipeTracePointCount": 0,
+      "tapKeyCount": 0
+    },
+    {
+      "slotId": 17,
+      "sessionGeneration": 2,
+      "hostPackage": "com.anthropic.claude",
+      "inputMode": "TAP",
+      "commitType": "DECIDED",
+      "committedText": "degree",
+      "finalText": "degree",
+      "typedText": "degree",
+      "separatorCharCount": 1,
+      "committedAtMs": 1781299453874,
+      "swipeTracePointCount": 0,
+      "tapKeyCount": 0
+    }
+  ],
+  "paragraphJournal": [
+    {
+      "slotId": 1,
+      "word": "I",
+      "charCount": 1
+    },
+    {
+      "slotId": 2,
+      "word": "jury",
+      "charCount": 5
+    },
+    {
+      "slotId": 3,
+      "word": "just",
+      "charCount": 5
+    },
+    {
+      "slotId": 4,
+      "word": "got",
+      "charCount": 4
+    },
+    {
+      "slotId": 5,
+      "word": "the",
+      "charCount": 3
+    },
+    {
+      "slotId": 6,
+      "word": "swipe",
+      "charCount": 5
+    },
+    {
+      "slotId": 7,
+      "word": "typing",
+      "charCount": 6
+    },
+    {
+      "slotId": 8,
+      "word": "to",
+      "charCount": 2
+    },
+    {
+      "slotId": 9,
+      "word": "work",
+      "charCount": 4
+    },
+    {
+      "slotId": 10,
+      "word": "It's",
+      "charCount": 4
+    },
+    {
+      "slotId": 11,
+      "word": "already",
+      "charCount": 7
+    },
+    {
+      "slotId": 12,
+      "word": "function",
+      "charCount": 8
+    },
+    {
+      "slotId": 13,
+      "word": "functionally",
+      "charCount": 13
+    },
+    {
+      "slotId": 14,
+      "word": "accurate",
+      "charCount": 9
+    },
+    {
+      "slotId": 15,
+      "word": "to",
+      "charCount": 3
+    },
+    {
+      "slotId": 16,
+      "word": "a",
+      "charCount": 2
+    },
+    {
+      "slotId": 17,
+      "word": "degree",
+      "charCount": 7
+    }
+  ],
+  "liveImeSession": {
+    "sessionGeneration": 2,
+    "wordsCommitted": 17,
+    "journalUsedChars": 88,
+    "journalMaxChars": 3000,
+    "journalWordCount": 17,
+    "lastSlotId": 17,
+    "lastWord": "degree",
+    "lastHostPackage": "com.anthropic.claude"
+  }
+}

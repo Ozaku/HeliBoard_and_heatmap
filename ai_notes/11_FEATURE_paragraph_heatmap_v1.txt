@@ -1,0 +1,141 @@
+================================================================================
+FEATURE 2 — PARAGRAPH CORRECTION JOURNAL & HEATMAP v1
+Related: Planned Features.txt §2; 05_dictionaries_and_learning.md
+================================================================================
+
+USER INTENT (summary)
+  Unlike keyboards that only look at the previous 1–3 words, retain context for
+  roughly 1–2 paragraphs (~1000–2000 characters, exact size TBD / maybe slider).
+  Before send, field exit, or when text ages out of the window, scan for words
+  that were corrected and attribute errors to keys and swipe patterns.
+  Build a heatmap: per-key accuracy (corrected most vs least often).
+
+--------------------------------------------------------------------------------
+WHAT "HEATMAP" MEANS HERE (two related concepts)
+--------------------------------------------------------------------------------
+
+  CONCEPT A — AGGREGATE KEY HEATMAP (primary)
+    For each key on layout L:
+      intensity = f(times user had to fix letters involving this key)
+    Separate matrices for TAP and SWIPE (Feature 5 segregation).
+    Used to bias scoring and resize hit targets — not necessarily a visible UI
+    heat overlay in v1 (could be debug-only).
+
+  CONCEPT B — STROKE SIGNATURE MEMORY (secondary)
+    For swipe corrections, store a normalized stroke fingerprint for that word
+    attempt paired with {wrongWord, rightWord} so similar future strokes get
+    the right bias (e.g. same P>G>A>S>E shape → prefer PHASE over PATH).
+
+--------------------------------------------------------------------------------
+EVENT SOURCES (when to record)
+--------------------------------------------------------------------------------
+  1. Word committed by keyboard (space, punctuation, pick suggestion).
+  2. User manually edits composing word or committed word in field.
+  3. Autocorrect applied on space (typed X, committed Y).
+  4. User deletes/retypes word inside window (retroactive correction).
+  5. Window flush triggers (process batch):
+       - IME sends ACTION_SEND or equivalent
+       - Editor loses focus / keyboard hidden
+       - Character index slid beyond window size (FIFO)
+
+--------------------------------------------------------------------------------
+WORD SESSION RECORD (minimum fields)
+--------------------------------------------------------------------------------
+  sessionId, charStart, charEnd (offsets in paragraph buffer)
+  mode: TAP | SWIPE
+  trace:
+    TAP  → list of (keyId, timestamp) or code points
+    SWIPE → simplified polyline + corner key list + K0/K_end
+  keyboardSnapshot: layoutId, locale, row geometry hash
+  pipelineOutput: word shown by IME before user edits
+  finalText: word text after all edits until word "stable"
+  correctionChain: list of {from, to, reason} per character or per word swap
+  stable: bool — word unchanged for N ms or user moved to next word
+
+--------------------------------------------------------------------------------
+PARAGRAPH BUFFER DESIGN
+--------------------------------------------------------------------------------
+
+  Structure: ring buffer of characters + parallel index into WordSession list.
+  Window size W:
+    - Default proposal: 1500 characters (midpoint of 1000–2000).
+    - Soft minimum: 500 for low-RAM tier.
+    - Soft maximum: 4000 for "advanced" setting with slider (user idea).
+
+  MEMORY ESTIMATE (rough, for discussion)
+    2000 chars UTF-16 ≈ 4 KB text.
+    Per word avg 6 chars → ~333 words in window worst case (upper bound).
+    Per WordSession:
+      tap trace ~20 B, swipe ~200–500 B simplified stroke.
+    333 * 500 B ≈ 165 KB stroke data upper bound + metadata ≈ 250–400 KB total
+    per active IME session — acceptable on mid phones if compacted on flush.
+    Heatmap aggregates long-lived: 26–40 keys * few counters * 2 modes ≈ few KB.
+
+  CPU: flush on send/focus — O(words in window) diff pass; must run off UI thread.
+
+--------------------------------------------------------------------------------
+CORRECTION DETECTION WITHOUT FULL IME TEXT ACCESS
+--------------------------------------------------------------------------------
+  Android IME sees composing text + committed spans via InputConnection.
+  Challenges:
+    - Host app may not expose full paragraph to IME (only current field slice).
+    - User may move cursor and edit middle of paragraph — need periodic snapshot
+      diff or listen to onUpdateSelection + before/after text where permitted.
+
+  APPROACH 1 — IME-visible buffer only
+    Track only what passes through keyboard + composing region; simpler, matches
+    what user types on this keyboard (may miss edits done via paste in app).
+
+  APPROACH 2 — Poll getTextBeforeCursor / getTextAfterCursor when allowed
+    Wider context when input type permits; respect password/no-personalized flags.
+
+  APPROACH 3 — Flush only on explicit triggers user listed
+    send, field exit, window slide — reduces need for continuous full-field diff.
+
+  Recommend starting APPROACH 1 + 3, expand to 2 where NOT_FLAG_NO_PERSONALIZED.
+
+--------------------------------------------------------------------------------
+MAPPING CORRECTIONS TO KEYS
+--------------------------------------------------------------------------------
+  For each character index i where finalText[i] != pipelineOutput[i]:
+    - TAP: attribute to key that produced pipelineOutput[i] (from tap sequence).
+    - SWIPE: attribute to key at alignment position in hypothesized path, or
+      nearest stroke point to wrong letter's key center.
+    - If whole word replaced (tye → the): increment word-pair stats AND per-letter
+      Y negative, H positive (feeds Feature 3).
+
+  Aggregate into KeyHeatCell (see 00_MASTER_PLAN):
+    correctedFromCount[key], correctedToCount[key], attempts[key].
+
+--------------------------------------------------------------------------------
+FLUSH & PERSISTENCE
+--------------------------------------------------------------------------------
+  On flush:
+    1. Finalize any unstable WordSessions.
+    2. Merge into persistent heatmap store (SQLite recommended).
+    3. Trim ring buffer, keep overlapping tail if cross-paragraph continuity desired.
+    4. Optionally trigger batch weight update (Feature 3).
+
+  Privacy:
+    - Do not upload.
+    - User setting: clear all learning data.
+    - Optional: exclude passwords / incognito fields (reuse GestureEnabler patterns).
+
+--------------------------------------------------------------------------------
+RELATION TO EXISTING GestureDataGathering
+--------------------------------------------------------------------------------
+  Repo has GestureDataGatheringSettings.kt, GestureDataDao.kt for research.
+  Consumer heatmap should NOT hijack that path blindly — either extend DAO with
+  new tables or separate UserHeatmapDatabase to avoid breaking research builds.
+
+--------------------------------------------------------------------------------
+SETTINGS (future)
+--------------------------------------------------------------------------------
+  - Learning on/off master toggle.
+  - Paragraph window size (slider): 500 / 1500 / 3000 / custom.
+  - Clear heatmap data.
+  - (Later) View debug heat overlay per mode.
+
+================================================================================
+END FEATURE 2 v1
+================================================================================

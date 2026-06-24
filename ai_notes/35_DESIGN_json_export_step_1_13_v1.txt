@@ -1,0 +1,44 @@
+================================================================================
+
+DESIGN — Step 1.13 JSON export + file dump (beta 0.0.0.13)
+
+================================================================================
+
+
+
+FILES (credential filesDir — beta 0.0.0.14; v1 user_de broke FileProvider on share)
+
+  files/heatmap_learning/session_export_latest.json  — rewritten each commit (IME)
+
+  files/heatmap_learning/session_export_YYYYMMDD_HHMMSS.json — if auto dump on flush
+
+
+
+SETTINGS (Heatmap Smart Keyboard → Diagnostics & export)
+
+  [Toggle] Auto-save JSON on flush (default off)
+
+  [Action] Save session export to device — ACTION_CREATE_DOCUMENT (Files/Downloads picker)
+
+
+
+JSON (schemaVersion 1)
+
+  build, settings, instrumentation prefs, wordSessions[], paragraphJournal[], liveImeSession
+
+
+
+VERIFY
+
+  Type in Notes → Export session JSON → open in editor → wordSessions non-empty
+
+  Enable auto dump → blur field → extra session_export_*.json in heatmap_learning/
+
+
+
+================================================================================
+
+END
+
+================================================================================
+

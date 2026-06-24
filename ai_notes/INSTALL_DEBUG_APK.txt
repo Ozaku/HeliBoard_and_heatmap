@@ -1,0 +1,54 @@
+================================================================================
+INSTALL DEBUG APK (Windows + USB device)
+================================================================================
+
+YOUR FORK vs STORE HELIBOARD
+  - Release HeliBoard on phone: package helium314.keyboard
+  - This debug APK:              package helium314.keyboard.debug
+  - They install side-by-side. Data and settings do NOT mix.
+  - Launcher / keyboard list name (debug only): "Heatmap KB (beta)"
+  - Settings app title: "Heatmap KB Settings"
+  - In keyboard picker, choose "Heatmap KB (beta)" — NOT plain "HeliBoard"
+
+PREREQUISITES
+  1. USB debugging enabled on phone (Developer options).
+  2. Accept "Allow USB debugging" prompt on phone when cable connects.
+  3. Android SDK platform-tools (adb) — usually via Android Studio.
+     Gradle install below finds adb from ANDROID_HOME / local.properties.
+
+POWERSHELL (from repo root HeliBoard_and_heatmap)
+
+  # 1) See if device is visible (optional; Gradle also checks)
+  & "$env:LOCALAPPDATA\Android\Sdk\platform-tools\adb.exe" devices
+
+  # 2) Build + install (faster iteration, no minify):
+  .\gradlew.bat :app:installDebugNoMinify
+
+  # Or standard debug APK (minified, smaller):
+  .\gradlew.bat :app:installDebug
+
+  APK output (if installing manually):
+  app\build\outputs\apk\debugNoMinify\HeliBoard_3.9-debugNoMinify.apk
+
+MANUAL INSTALL (if Gradle install fails)
+  & "$env:LOCALAPPDATA\Android\Sdk\platform-tools\adb.exe" install -r `
+    "app\build\outputs\apk\debugNoMinify\HeliBoard_3.9-debugNoMinify.apk"
+
+ON PHONE AFTER INSTALL
+  1. Settings → System → Languages & input → On-screen keyboard → Manage keyboards
+     → Enable "Heatmap KB (beta)" (package .debug).
+  2. Pick "Heatmap KB (beta)" as current keyboard (or use IME switcher).
+  3. Open launcher → "Heatmap KB Settings" (or HeliBoard settings icon if unchanged)
+     → Main list → "Heatmap Smart Keyboard" for beta 0.0.0.2 instrumentation.
+  4. Optional: Advanced → Debug → enable Debug mode for logcat tag HeatmapWordSlot.
+
+TROUBLESHOOTING
+  - "adb not recognized" → use full path above or add platform-tools to PATH.
+  - "no devices" → replug USB, revoke USB debugging authorizations and re-allow.
+  - Install failed UPDATE_INCOMPATIBLE → uninstall old helium314.keyboard.debug first:
+      adb uninstall helium314.keyboard.debug
+  - Wrong keyboard active → you may still be on store HeliBoard; switch IME explicitly.
+
+================================================================================
+END
+================================================================================

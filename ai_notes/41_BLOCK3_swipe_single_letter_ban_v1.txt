@@ -1,0 +1,28 @@
+LOCKED RULE — Swipe never commits lone A or I on multi-key strokes
+================================================================================
+Roadmap: Block 3 (steps 13–17). Current code step: Block 2 step 9 (NOT swipe yet).
+
+USER INTENT
+  Tap/swipe mode switches by touch type. Users never intentionally swipe "A" or "I" alone.
+  Swipe I→T must NEVER decode as committed word "I".
+  Micro-drag on one key may stay ambiguous (tap path handles intentional A/I).
+
+INTERIM (beta 0.0.0.18+, legacy HeliBoard gesture path)
+  HeatmapSwipeSingleLetterBan_v1.kt — called from Suggest.getSuggestedWordsForBatchInput
+  When strokeImpliesMultiKeyIntent (≥2 letter keys sampled OR ≥40px span):
+    strip leading suggestions that are exactly a/A/i/I
+
+LITERAL ENGINE (Block 3 step 13–15 — must re-apply same rule)
+  After segment→key inference: if pathLetters.size >= 2, exclude 1-char candidates a/i
+  from activePrefixes before lift commit.
+  Do NOT ban other single-letter dictionary entries (O, etc.) unless user adds later.
+
+TAP
+  Unchanged — single-key tap still commits A/I normally.
+
+FUTURE HYPER-SPECIFIC RULES
+  User will add more autocorrect rules after initial complete-set build; keep in ai_notes/*.
+
+VERIFY (user, after install)
+  Swipe i→t→… in Kingshot or Search → must not commit lone "I".
+  Tap i + space → still commits "I".

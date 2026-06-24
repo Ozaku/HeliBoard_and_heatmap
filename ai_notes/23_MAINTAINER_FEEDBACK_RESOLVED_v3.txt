@@ -1,0 +1,158 @@
+================================================================================
+MAINTAINER FEEDBACK RESOLVED v3
+Source: inline # lines in Composer_Suggestions.txt (human notes)
+Maps each response → locked design decision for implementation
+================================================================================
+
+CONVENTION
+  # lines in Composer_Suggestions.txt are preserved as historical feedback.
+  This file is the authoritative "what we decided" summary for agents.
+
+--------------------------------------------------------------------------------
+S1 — Word slot ID — ACCEPTED, CLARIFIED
+--------------------------------------------------------------------------------
+DECISION: Implement slot IDs in Phase 1 instrumentation.
+CLARIFY:
+  - Gentle autocorrect applies when user SWITCHES from swipe to tap at the SAME
+    slot (same word position) after a bad swipe — even if they edit again.
+  - If user continues swiping (no tap retry), autocorrect behaves normally.
+  - Slots must support journal back several paragraphs (slider window).
+
+--------------------------------------------------------------------------------
+S2 — Confidence / commit — REVISED (major)
+--------------------------------------------------------------------------------
+REJECTED: Using near-tie whole-word scores to withhold commit or auto-pick #2
+  (e.g. food → find via "second best"). That caps accuracy and mimics broken
+  commercial keyboards.
+
+ACCEPTED:
+  - Per-segment, per-KEY confidence during swipe (dictionary narrows letter by
+    letter). Whole-word confidence is emergent from path, not guessed upfront.
+  - On finger lift: commit the top dictionary match to the text field.
+  - Runner-up words stay in suggestion strip (not withheld) for user correction.
+  - Heatmap + correction history bias keys/paths so top match becomes correct
+    over time (e.g. F→gap I/O diagonal UP-RIGHT trains toward I not O).
+  - Row constraint: stroke entering bottom row must admit bottom-row letters in
+    path (anti "food" when user hit N — geometry + narrowing, not LM guess).
+
+NEW CANONICAL EXAMPLE: NEXT swipe (see 20_FEATURE_*_v3.txt appendix).
+
+S2 old "confidence gate" doc language is retired; strip learning replaces it.
+
+--------------------------------------------------------------------------------
+S3 — Debug export — ACCEPTED, EXPANDED
+--------------------------------------------------------------------------------
+DECISION: Permanent diagnostic feature (not throwaway). Robust JSON export;
+  core journal pipeline doubles as export source. Phase 1.
+
+--------------------------------------------------------------------------------
+S4 — Prefix cap — ACCEPTED (maintainer defers to engineering)
+--------------------------------------------------------------------------------
+
+--------------------------------------------------------------------------------
+S5 — Curve templates — ACCEPTED + COORDINATE MAP
+--------------------------------------------------------------------------------
+DECISION: Curve signatures include geometry AND absolute/normalized coordinates.
+  Full QWERTY swipe-area coordinate map: every touch maps to key region + learned
+  invisible offset per key (tap/swipe separate). Curve hash + bucket alignment.
+
+--------------------------------------------------------------------------------
+S6 — Add to dictionary prompt — CONFIRMED
+--------------------------------------------------------------------------------
+
+--------------------------------------------------------------------------------
+S7 — Test swipes — CORE INFRASTRUCTURE
+--------------------------------------------------------------------------------
+DECISION:
+  - Continuous recording of swipe/tap sessions (not only assets/test_swipes.txt).
+  - Settings: dump user session data to file (pairs with S3 export).
+  - No hardcoded word list in source for tests — use installed dictionary only;
+    fixtures are stroke coordinates + expected behavior, not embedded "PAUSE" strings.
+
+--------------------------------------------------------------------------------
+S8 — Rename Common Typo / CommonTypo — CONFIRMED at first settings PR
+--------------------------------------------------------------------------------
+
+--------------------------------------------------------------------------------
+P1 — Dictionary preload — ACCEPTED
+--------------------------------------------------------------------------------
+GLOSSARY: "Trie" = tree index inside .dict file for fast prefix lookup (see 24_GLOSSARY).
+
+--------------------------------------------------------------------------------
+P2 — Curve hash compression — ACCEPTED if semantic preserved
+--------------------------------------------------------------------------------
+
+--------------------------------------------------------------------------------
+P3 — Weight decay — ACCEPTED WITH NUANCE
+--------------------------------------------------------------------------------
+DECISION:
+  - Strong bias is OK when user keeps correcting same pattern→word; not "lock-in"
+    because user can retrain via slightly different swipe or repeated reverse corrections.
+  - Decay applies to stale habits when user stops reinforcing.
+  - fam/fan example: invisible M grow left, N may shift; user can still swipe N for "fan".
+  - Word-level autocorrect override ONLY after repeated correction of BOTH similar
+    swipe pattern AND key sequence to a specific replacement word.
+
+--------------------------------------------------------------------------------
+P4 — Device metrics — APPROVED
+--------------------------------------------------------------------------------
+
+--------------------------------------------------------------------------------
+SECTION C — ML / weights — UPDATED LIMITS
+--------------------------------------------------------------------------------
+DECISION:
+  - Train on human corrections for keys, swipe patterns, and words.
+  - Frequent Typo List promotion (density-based, tunable in testing):
+      examples from user: 5+/day × 3 days; OR 20+/day; OR 15+/hour; OR 5+/15min
+      for same wrong string (e.g. tye→the). Exact formula TBD on phone.
+  - Protected words (the, and, of, …): cannot use naive "all 2–3 letter words immune"
+      (breaks tye/the). Per-word allowlist + promotion logic instead.
+  - Key shrink: max 20% (min 80% visual/hit baseline). Never grow beyond gap to
+    neighbors; no overlap; invisible position shift: edge must not cross original
+    key center; adjacent keys shrink/grow to meet halfway if both need space.
+
+--------------------------------------------------------------------------------
+SECTION D — Build order — ACCEPTED, SUB-PHASE
+--------------------------------------------------------------------------------
+DECISION: Same 5 steps but each step split into shippable sub-milestones.
+
+--------------------------------------------------------------------------------
+E3 — Runner-ups — RESOLVED
+--------------------------------------------------------------------------------
+DECISION: Always commit best word on swipe end; always show runner-ups in
+  suggestion strip. Picking alternate trains that swipe pattern → word.
+  Retroactive correction within paragraph window (slider range) still updates
+  learning for that slot's stored swipe data.
+
+--------------------------------------------------------------------------------
+F2 — Typo list thresholds — TEST ON DEVICE
+--------------------------------------------------------------------------------
+DECISION: Density rules above as starting point; function-word guard list separate
+  from length-based immunity.
+
+--------------------------------------------------------------------------------
+F3 — Export/import backup — YES, post-v1 acceptable
+--------------------------------------------------------------------------------
+
+--------------------------------------------------------------------------------
+F4 — Heatmap debug overlay — YES (diagnostic toggle)
+--------------------------------------------------------------------------------
+
+--------------------------------------------------------------------------------
+F5 — Conservative learning speed — YES
+--------------------------------------------------------------------------------
+
+--------------------------------------------------------------------------------
+F6 — Key geometry — RESOLVED
+--------------------------------------------------------------------------------
+DECISION: ~20–22% max shrink (80% floor); max grow = fill inter-key gap only;
+  neighbors compensate (meet halfway); touching OK, overlapping forbidden.
+
+--------------------------------------------------------------------------------
+F7 — Spell checker — EXPLAIN (no decision required now)
+--------------------------------------------------------------------------------
+See 24_GLOSSARY_v3.txt § Spell checker vs IME. IME-first for all learning.
+
+================================================================================
+END v3
+================================================================================

@@ -1,0 +1,50 @@
+================================================================================
+
+SENSITIVE FIELD LEARNING GATE — beta 0.0.0.16
+
+================================================================================
+
+
+
+HELIBOARD EXISTING
+
+  InputAttributes.mIsPasswordField — password / visible-password input types
+
+  InputAttributes.mNoLearning — EditorInfo.IME_FLAG_NO_PERSONALIZED_LEARNING (O+)
+
+  SettingsValues.mIncognitoModeEnabled — password OR noLearning OR user always-incognito pref
+
+  GestureEnabler.setPasswordMode — disables glide on password fields
+
+  GestureDataGathering — also skips email fields
+
+
+
+HEATMAP (HeatmapLearningGate_v1)
+
+  shouldRecord() mirrors above + email/uri types
+
+  All commits, journal, export, selection, field probe gated
+
+  Logcat: skip commit (password_field) etc.
+
+
+
+FUTURE (roadmap step 40)
+
+  Optional user toggle "learn in sensitive fields" default OFF — not implemented
+
+
+
+VERIFY
+
+  Type in password field → logcat skip commit (password_field), lifetime commits unchanged
+
+
+
+================================================================================
+
+END
+
+================================================================================
+

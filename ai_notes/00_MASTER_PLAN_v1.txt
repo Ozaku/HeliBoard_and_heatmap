@@ -1,0 +1,202 @@
+================================================================================
+AI_NOTES — MASTER PLAN v1
+Project: HeliBoard_and_heatmap (HeliBoard fork + heatmap / personalized decode)
+Date: 2026-06-01
+Status: PLANNING ONLY — no application code changes until design is locked
+================================================================================
+
+SOURCE OF TRUTH FOR USER INTENT
+  - User prompt preserved verbatim in: Planned Features.txt
+  - Architecture of current fork: 01–07 *.md in this folder
+  - This file + numbered FEATURE_*.txt files expand intent into an implementation guide
+
+--------------------------------------------------------------------------------
+MISSION (one paragraph)
+--------------------------------------------------------------------------------
+Rebuild swipe decoding and autocorrect so they respect what the user actually
+did on the keyboard: anchor on first/last touch, honor sharp path corners as
+intended letters, use a long-context correction journal (1–2 paragraphs) to
+build per-key heatmaps, train local weights (no cloud AI), segregate tap vs
+swipe statistics, optionally resize invisible key hit targets (max ±22%), and
+maintain a user-visible "Naughty List" for strings that should never be output
+again unless unbanned.
+
+--------------------------------------------------------------------------------
+CURRENT BASELINE (HeliBoard today — do not re-discover from scratch)
+--------------------------------------------------------------------------------
+  - Swipe: PointerTracker → BatchInputArbiter → WordComposer batch pointers →
+    Suggest.getSuggestedWordsForBatchInput → BinaryDictionary JNI →
+    ProximityInfo spatial grid (keys NEAR stroke are candidates — explains
+    "letters from rows finger never crossed"). See 04_swipe_gesture_input.md.
+  - Gesture suggest POLICY may be NULL in OSS build unless external
+    libjni_latinime / Google lib registers factory (critical blocker for swipe
+    quality). See gesture_suggest_policy_factory.cpp notes in 04.
+  - Autocorrect: native scores + Suggest.shouldBeAutoCorrected policy in Kotlin.
+    See 03_autocorrect_and_suggestions.md.
+  - Learning today: UserHistoryDictionary on word COMMIT only (not rich stroke
+    + correction alignment). See 05_dictionaries_and_learning.md.
+  - Repo name says "heatmap" but no heatmap implementation exists yet in tree.
+
+--------------------------------------------------------------------------------
+FEATURE MAP (user numbering → internal modules)
+--------------------------------------------------------------------------------
+  [F1] Three-signal swipe decode     → 10_FEATURE_swipe_three_signal_decoder_v1.txt
+  [F2] Paragraph correction journal  → 11_FEATURE_paragraph_heatmap_v1.txt
+  [F3] Local weight training         → 12_FEATURE_local_weight_training_v1.txt
+  [F4] Naughty List (ban semantics)  → 13_FEATURE_naughty_list_v1.txt
+  [F5] Dual-mode key geometry        → 14_FEATURE_dual_mode_key_geometry_v1.txt
+  [F6] Exploration / options         → 15_IMPLEMENTATION_GUIDE_swipe_and_scoring_v1.txt
+  [?]  Decisions pending             → 16_OPEN_QUESTIONS_v1.txt
+
+--------------------------------------------------------------------------------
+DESIGN PRINCIPLES (agreed implicitly by user prompt)
+--------------------------------------------------------------------------------
+  1. LOCAL ONLY — all learning on device; no LLM / cloud inference required.
+  2. PRIVACY-PRESERVING BY DEFAULT — store patterns + aggregates, not full
+     message text forever (exact retention policy TBD in 16_OPEN_QUESTIONS).
+  3. TAP ≠ SWIPE — never merge heatmap or hit-target profiles across modes.
+  4. EXPLAINABLE — user can see Naughty List and undo bans; advanced users may
+     want heatmap debug view later (optional, not in v1 scope unless requested).
+  5. INCREMENTAL SHIP — instrument and log before rewriting native decoder.
+  6. MINIMAL SURPRISE — aggressive autocorrect only where data supports it;
+     naughty list is the hard stop for repeated typo strings.
+
+--------------------------------------------------------------------------------
+PROPOSED IMPLEMENTATION PHASES (recommended order)
+--------------------------------------------------------------------------------
+
+PHASE 0 — PLANNING (NOW)
+  - Read ai_notes 01–07 + this plan set.
+  - Answer 16_OPEN_QUESTIONS_v1.txt.
+  - Choose swipe strategy (15 guide): OSS gesture policy vs fork proximity vs
+    hybrid Kotlin post-filter.
+
+PHASE 1 — OBSERVATION LAYER (low risk, high value)
+  Goal: Record what we need for F2/F3/F4 without changing top suggestion yet.
+  Deliverables:
+    - WordSession record: input mode (tap|swipe), stroke or key sequence,
+      composed candidate, committed word, post-hoc final word if edited.
+    - Correction detector: diff composing text vs final text on space, send,
+      focus loss, or paragraph window expiry.
+    - Ring buffer sized to ~1–2 paragraphs (char budget configurable later).
+  Touch (future): new Kotlin module e.g. learning/SessionJournal.kt; hooks in
+    InputLogic commit paths; optional debug settings screen (read-only stats).
+  Does NOT require: JNI rewrite, naughty list UI.
+
+PHASE 2 — HEATMAP STORE (F2 + F5 data half)
+  Goal: Persist aggregates from Phase 1 journal.
+  Deliverables:
+    - Per-locale, per-keyboard-layout heat structures: tap grid + swipe grid.
+    - Metrics: times key appeared in input vs times user corrected away/to it.
+    - Optional: store simplified stroke signature per word for similarity match.
+  Storage: SQLite or binary blob in app files dir (size caps, export TBD).
+  Touch (future): GestureDataDao pattern already exists for research — may extend
+    or parallel, not replace consumer path blindly.
+
+PHASE 3 — SCORING INJECTION (F3 soft weights)
+  Goal: Bias existing suggest scores using heatmap + word-pair stats.
+  Deliverables:
+    - Key-level bias added to spatial score (tap path in typing_scoring;
+      swipe path in proximity / gesture policy).
+    - Word-level negative boost for frequently corrected strings (pre-naughty).
+    - Decay + ceilings so weights cannot run away (see 12_FEATURE).
+  Touch (future): DictionaryFacilitatorImpl merge layer OR native weight table
+    hook; must work when gesture policy is still proprietary/null.
+
+PHASE 4 — SWIPE DECODER v2 (F1 core)
+  Goal: Replace "all keys near stroke" with three-signal + dictionary beam.
+  Deliverables:
+    - Stroke preprocessor: first key, last key, corner/key inference along path.
+    - Candidate generator: dictionary words matching anchors + path letters.
+    - Heatmap tie-break (P>G>A>S>E → PHASE when G/H confused).
+    - Runner-up list kept in memory for strip / backspace undo UX.
+  Touch (future): proximity_info.cpp, gesture policy factory, BatchInputArbiter
+    sampling; possibly open-source GestureSuggestPolicy implementation.
+  Highest risk / highest reward phase.
+
+PHASE 5 — NAUGHTY LIST + SETTINGS (F4)
+  Goal: Hard ban + forced autocorrect target for chronic typos.
+  Deliverables:
+    - Promotion rules from journal (e.g. "tye" → "the" N times).
+    - Settings › Naughty List: view, unban, remove from user dict (independent).
+    - Scoring: banned strings never emitted by swipe or autocorrect.
+  Touch (future): settings UI, persistent list, integration with Phase 3 weights.
+
+PHASE 6 — INVISIBLE KEY RESIZE (F5 effect)
+  Goal: Apply ±22% max hit box shift from heatmap per mode.
+  Deliverables:
+    - Rebuild ProximityInfo or touch slop from tap vs swipe profiles.
+    - User-facing toggle + reset to defaults.
+  Depends on: stable heatmap (Phase 2–3). Apply after scoring injection proven.
+
+PHASE 7 — POLISH & SMART EXTRAS (F6 bucket)
+  Examples: strip shows alternates from runner-up list; per-app profiles; import/
+  export learning data; slider for paragraph window on high-RAM devices.
+
+--------------------------------------------------------------------------------
+CROSS-CUTTING DATA MODEL (sketch — refine when coding)
+--------------------------------------------------------------------------------
+
+WordSession {
+  id, timestamp, locale, layoutId,
+  mode: TAP | SWIPE,
+  inputTrace: TapSequence | StrokePoints,
+  rawSuggestion: String?,   // what keyboard first committed
+  finalText: String,         // after user edits (may equal raw)
+  corrections: [{index, fromChar, toChar, source: autocorrect|manual}],
+  ngramContextBefore: ...    // optional for word weighting
+}
+
+KeyHeatCell {
+  keyId,               // stable id per layout position
+  attempts,            // appeared in committed input trace
+  correctedFromCount,  // user changed FROM this key
+  correctedToCount,    // user changed TO this key (desired key)
+  swipeAttempts, tapAttempts,  // segregated counters
+}
+
+NaughtyEntry {
+  string, locale?,
+  state: SOFT_NEGATIVE | HARD_BAN,
+  topCorrectionTarget: String?,  // e.g. "the" for "tye"
+  hitCount, lastSeen,
+  userPinned: bool   // if user manually banned
+}
+
+--------------------------------------------------------------------------------
+RISK REGISTER
+--------------------------------------------------------------------------------
+  R1  Gesture policy null in OSS — F1/F4 swipe quality blocked until policy
+      implemented or external lib loaded (04_swipe).
+  R2  Native vs Kotlin split — scoring in JNI is fast but harder to iterate;
+      Kotlin post-filter is easier but may lag on long words.
+  R3  Learning wrong words — history dict already learns commits; must NOT
+      reinforce bad swipe outputs (05 refactor note). Journal must distinguish
+      user-accepted vs auto-committed.
+  R4  Memory / battery — 1000–2000 char window + stroke storage per word;
+      need caps and compaction (11_FEATURE).
+  R5  Multilingual / layout change — heatmap keyed by layout + locale.
+  R6  UX trust — invisible key resize must feel helpful not "fighting" the user;
+      ship with conservative defaults and reset.
+
+--------------------------------------------------------------------------------
+SUCCESS CRITERIA (measurable, for later QA)
+--------------------------------------------------------------------------------
+  - Swipe: fewer user backspaces per gesture word on test phrase set.
+  - Swipe: row-skipping false letters reduced vs baseline HeliBoard on same device.
+  - Tap: reduced corrections on user's chronic miss-keys (heatmap validation).
+  - "tye" class typos: after training period, never offered as first suggestion;
+    autocorrect to "the" when ban active.
+  - Tap vs swipe: divergent profiles on same key documented in debug stats.
+
+--------------------------------------------------------------------------------
+DOCUMENT MAINTENANCE
+--------------------------------------------------------------------------------
+  - Bump version suffix (_v2) when making substantive plan revisions.
+  - Move superseded *_vN.txt to ai_notes/old versions/ when user rule applies
+    to plan docs (optional; ai_notes README says versioning relaxed here).
+  - Update README.md index when adding plan files.
+
+================================================================================
+END MASTER PLAN v1
+================================================================================

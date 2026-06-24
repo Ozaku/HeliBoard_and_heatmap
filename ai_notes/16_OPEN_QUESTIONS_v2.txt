@@ -1,0 +1,118 @@
+================================================================================
+OPEN QUESTIONS v2 — maintainer answers recorded (2026-06-01 follow-up)
+Supersedes decisions in v1; unresolved items marked OPEN
+================================================================================
+
+SWIPE / DECODE
+--------------------------------------------------------------------------------
+Q1. Primary engineering strategy?
+ANSWERED: Maximum compatibility.
+  - Build our own literal swipe engine (no dependency on proprietary swipe library).
+  - Use any installed main dictionary (standard HeliBoard binary dict pipeline).
+  - Phased delivery: instrument + collect data first (Kotlin/Java), then replace
+    native gesture policy over time without breaking tap typing or dict loading.
+  - "Hybrid" in older notes means: ship learning layers before the new decoder is
+    complete, and optionally re-rank legacy native output during transition — NOT
+    a requirement to keep swypelibs. See 17_USER_DECISIONS_AND_GLOSSARY_v2.txt.
+
+Q2. Common Typo List — block tap typing?
+ANSWERED: Do NOT block intentional tap typing by default.
+  - Renamed feature: "Common Typo List" (not Naughty List).
+  - If user tap-types the same word twice in a row at the same word position,
+    allow it (no hard block). Does not carry to the next word slot.
+  - Per-word session: separate data for swipe vs tap vs corrections.
+  - After user deletes a bad swipe word and tap-types replacement: strongly reduce
+    autocorrect on that word; compare taps to prior swipe "almost matches"; if no
+    match, treat as possible new user word (not in dictionary yet).
+  - Swipe/autocorrect pipeline may still suppress common typos; tap intent wins
+    when user demonstrates deliberate entry (double-tap same word rule).
+
+Q3. Loop gestures in v1?
+ANSWERED (via glossary): User was unfamiliar with "loops" term.
+  - Loops = stroke paths that curve back over keys already visited (PLASTIC example).
+  - v1 must handle curves and direction changes literally; full loop mastery is
+    learned over time from user corrections (heavy weight on curve geometry stats).
+  - Not deferred entirely — literal corner/curve letter inference is core; exotic
+    loops improve as heatmap/curve library grows.
+
+Q4. Runner-up suggestions in strip?
+OPEN — not specified in follow-up. Suggestion: show when confidence gap is small.
+
+HEATMAP / JOURNAL
+--------------------------------------------------------------------------------
+Q5. Paragraph window size?
+ANSWERED: Settings slider range 500–3000 characters.
+  - Light snap every 100 (500, 600, … 3000) but user can set values between snaps.
+  - Default: recommend 1500 until user changes (document in settings spec).
+
+Q6. Learning in sensitive fields?
+ANSWERED: User setting, default OFF.
+  - Setting under Heatmap Smart Keyboard Settings.
+  - Same screen explains: data stays on device; never uploaded or sold.
+
+Q7. Stroke storage long-term?
+PARTIALLY ANSWERED: Keep rich data but compact.
+  - Store: start/end anchors, simplified path, per-letter alignment vs key centers,
+    curve signatures, almost-match word list per swipe session.
+  - Not full raw polyline forever if simplified form suffices (see 19_PERFORMANCE).
+  - Unban from Common Typo List does NOT delete swipe/letter/word weights.
+
+Q8. Visible heatmap debug UI?
+OPEN — suggest developer/advanced toggle under same settings category.
+
+Q9. Per-app profiles?
+OPEN — not requested; defer.
+
+TRAINING / WEIGHTS
+--------------------------------------------------------------------------------
+Q10. Learning speed?
+OPEN — bias toward conservative defaults; corrections weigh heavily (user emphasis).
+
+Q11. Export/import learning?
+OPEN — useful for device migration; not required for v1.
+
+Q12. Multilingual heatmaps?
+OPEN — recommend per locale + layout hash (compatibility with multiple dicts).
+
+COMMON TYPO LIST (formerly naughty)
+--------------------------------------------------------------------------------
+Q13. Auto-promotion thresholds?
+OPEN — keep v1 proposal (3 soft / 8 hard) until testing.
+
+Q14. Unban weight reset?
+ANSWERED: Do NOT wipe learning on unban.
+  - Remove list restriction only.
+  - Retain swipe patterns that produced typo, letter-level hits/misses, word-pair
+    stats, curve associations.
+
+Q15. Manual add to list?
+OPEN — recommend yes in settings.
+
+KEY GEOMETRY
+--------------------------------------------------------------------------------
+Q16. ±22% scale?
+OPEN — recommend uniform scale per key for simplicity unless testing says otherwise.
+
+Q17. Swipe hit box resize?
+ANSWERED: Optional setting (default: bias-only for swipe; resize for tap optional).
+
+Q18. Reset geometry?
+OPEN — one "Reset learning & geometry" + per-mode reset under settings group.
+
+PRODUCT / SCOPE
+--------------------------------------------------------------------------------
+Q19. Min Android?
+OPEN — follow HeliBoard existing minSdk unless user specifies.
+
+Q20. Spell checker scope?
+OPEN — IME-first; spell checker shares learning later if affordable.
+
+Q21. GestureDataGathering?
+OPEN — parallel research path; consumer heatmap separate DB.
+
+Q22. Privacy policy?
+ANSWERED in spirit: on-device only messaging in settings (legal text TBD).
+
+================================================================================
+END OPEN QUESTIONS v2
+================================================================================

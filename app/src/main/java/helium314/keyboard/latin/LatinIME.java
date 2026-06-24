@@ -71,6 +71,8 @@ import helium314.keyboard.latin.touchinputconsumer.GestureConsumer;
 import helium314.keyboard.latin.utils.ColorUtilKt;
 import helium314.keyboard.latin.utils.FloatingKeyboardUtils;
 import helium314.keyboard.latin.utils.FoldableUtils;
+import helium314.keyboard.heatmap.learning.HeatmapImeHeartbeat_v1;
+import helium314.keyboard.heatmap.learning.HeatmapWordSlotSession_v7;
 import helium314.keyboard.latin.utils.GestureDataGatheringKt;
 import helium314.keyboard.latin.utils.GestureDataGatheringSettings;
 import helium314.keyboard.latin.utils.InlineAutofillUtils;
@@ -849,6 +851,8 @@ public class LatinIME extends InputMethodService implements
     void onStartInputViewInternal(final EditorInfo editorInfo, final boolean restarting) {
         super.onStartInputView(editorInfo, restarting);
 
+        HeatmapImeHeartbeat_v1.onImeStarted(this);
+
         setGestureDataGatheringMode(editorInfo);
 
         mDictionaryFacilitator.onStartInput();
@@ -863,6 +867,10 @@ public class LatinIME extends InputMethodService implements
         SettingsValues currentSettingsValues = mSettings.getCurrent();
         boolean inputTypeChanged = !currentSettingsValues.isSameInputType(editorInfo);
         boolean isDifferentTextField = !restarting || inputTypeChanged;
+
+        // ai-note: reset when host app or text field changes (not in our settings UI)
+        HeatmapWordSlotSession_v7.onInputViewStarted(this,
+                editorInfo != null ? editorInfo.packageName : null, isDifferentTextField, editorInfo);
 
         // we want to reload the settings before calling updateKeyboardTheme, because updateKeyboardTheme reads SettingsValues.mToolbarMode
         if (isDifferentTextField || !currentSettingsValues.hasSameOrientation(getResources().getConfiguration())) {
@@ -989,7 +997,7 @@ public class LatinIME extends InputMethodService implements
         mainKeyboardView.setKeyPreviewPopupEnabled(currentSettingsValues.mKeyPreviewPopupOn);
         mainKeyboardView.setSlidingKeyInputPreviewEnabled(currentSettingsValues.mSlidingKeyInputPreviewEnabled);
         mainKeyboardView.setGestureHandlingEnabledByUser(
-                currentSettingsValues.mGestureInputEnabled,
+                currentSettingsValues.mSwipeGesturesEnabled,
                 currentSettingsValues.mGestureTrailEnabled,
                 currentSettingsValues.mGestureFloatingPreviewTextEnabled);
 
@@ -1032,6 +1040,9 @@ public class LatinIME extends InputMethodService implements
     void onFinishInputViewInternal(final boolean finishingInput) {
         super.onFinishInputView(finishingInput);
         Log.i(TAG, "onFinishInputView");
+        final EditorInfo ei = getCurrentInputEditorInfo();
+        final String host = ei != null ? ei.packageName : null;
+        HeatmapWordSlotSession_v7.onFieldBlur(this, host, mInputLogic.mConnection, ei);
         cleanupInternalStateForFinishInput();
     }
 

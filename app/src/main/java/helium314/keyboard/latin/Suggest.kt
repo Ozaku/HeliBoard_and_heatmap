@@ -21,6 +21,9 @@ import helium314.keyboard.latin.dictionary.Dictionary
 import helium314.keyboard.latin.settings.Settings
 import helium314.keyboard.latin.settings.SettingsValuesForSuggestion
 import helium314.keyboard.latin.suggestions.SuggestionStripView
+import helium314.keyboard.heatmap.learning.HeatmapSwipeSingleLetterBan_v1
+import helium314.keyboard.heatmap.swipe.HeatmapGestureMatchDecode_v2
+import helium314.keyboard.heatmap.swipe.HeatmapSwipeModePolicy_v1
 import helium314.keyboard.latin.utils.AutoCorrectionUtils
 import helium314.keyboard.latin.utils.Log
 import helium314.keyboard.latin.utils.SuggestionResults
@@ -269,16 +272,43 @@ class Suggest(private val mDictionaryFacilitator: DictionaryFacilitator) {
         settingsValuesForSuggestion: SettingsValuesForSuggestion,
         inputStyle: Int, isCorrectionEnabled: Boolean, sequenceNumber: Int
     ): SuggestedWords {
-        val suggestionResults = mDictionaryFacilitator.getSuggestionResults(
-            wordComposer.composedDataSnapshot, ngramContext, keyboard,
-            settingsValuesForSuggestion, SESSION_ID_GESTURE, inputStyle
-        )
-
-        // For transforming words that don't come from a dictionary, because it's our best bet
         val locale = mDictionaryFacilitator.mainLocale
         val capsMode = getCapsModeForGesture(wordComposer, keyboard)
-        val suggestionsContainer = getTransformedSuggestedWordInfoList(capsMode, suggestionResults, 0, locale)
-        replaceSingleLetterFirstSuggestion(suggestionsContainer)
+        val settingsValues = Settings.getValues()
+        val useHeatmapDecode = HeatmapSwipeModePolicy_v1.useHeatmapDecode(settingsValues)
+
+        val suggestionResults: SuggestionResults
+        val suggestionsContainer: ArrayList<SuggestedWordInfo>
+        if (useHeatmapDecode) {
+            suggestionResults = SuggestionResults(
+                SuggestedWords.MAX_SUGGESTIONS,
+                ngramContext.isBeginningOfSentenceContext,
+                false,
+            )
+            suggestionsContainer = ArrayList()
+            try {
+                val decode = HeatmapGestureMatchDecode_v2.decode(
+                    keyboard, wordComposer.inputPointers, mDictionaryFacilitator,
+                    ngramContext, settingsValuesForSuggestion, inputStyle,
+                )
+                suggestionResults.addAll(decode.ranked)
+                suggestionsContainer.addAll(
+                    getTransformedSuggestedWordInfoList(capsMode, suggestionResults, 0, locale),
+                )
+            } catch (e: Exception) {
+                Log.e(TAG, "heatmap swipe decode failed", e)
+            }
+        } else {
+            suggestionResults = mDictionaryFacilitator.getSuggestionResults(
+                wordComposer.composedDataSnapshot, ngramContext, keyboard,
+                settingsValuesForSuggestion, SESSION_ID_GESTURE, inputStyle,
+            )
+            suggestionsContainer = getTransformedSuggestedWordInfoList(capsMode, suggestionResults, 0, locale)
+            replaceSingleLetterFirstSuggestion(suggestionsContainer)
+        }
+        HeatmapSwipeSingleLetterBan_v1.suppressBannedSingleLetterSwipeLeaders(
+            suggestionsContainer, keyboard, wordComposer.inputPointers,
+        )
 
         val rejected: SuggestedWordInfo?
         if (SHOULD_REMOVE_PREVIOUSLY_REJECTED_SUGGESTION && suggestionsContainer.size > 1 && TextUtils.equals(
@@ -324,7 +354,8 @@ class Suggest(private val mDictionaryFacilitator: DictionaryFacilitator) {
             getNextWordSuggestions(ngramContext, keyboard, inputStyle, settingsValuesForSuggestion), rejected
         )
         val suggestionsList = if (SuggestionStripView.DEBUG_SUGGESTIONS && suggestionsContainer.isNotEmpty()) {
-            getSuggestionsInfoListWithDebugInfo(suggestionResults.first().mWord, suggestionsContainer)
+            val debugTyped = suggestionResults.firstOrNull()?.mWord ?: suggestionsContainer.first().mWord
+            getSuggestionsInfoListWithDebugInfo(debugTyped, suggestionsContainer)
         } else {
             suggestionsContainer
         }
@@ -372,7 +403,7 @@ class Suggest(private val mDictionaryFacilitator: DictionaryFacilitator) {
             if (capsMode != WordComposer.CAPS_MODE_OFF || 0 != trailingSingleQuotesCount) {
                 for (i in 0 until suggestionsCount) {
                     val wordInfo = suggestionsContainer[i]
-                    val wordLocale = wordInfo.mSourceDict.mLocale
+                    val wordLocale = wordInfo.mSourceDict?.mLocale
                     val transformedWordInfo = getTransformedSuggestedWordInfo(
                         wordInfo, wordLocale ?: defaultLocale, capsMode, trailingSingleQuotesCount
                     )
@@ -535,7 +566,9 @@ class Suggest(private val mDictionaryFacilitator: DictionaryFacilitator) {
             nextWordSuggestions: SuggestionResults, rejected: SuggestedWordInfo?
         ): SuggestedWordInfo? {
             if (pseudoTypedWordInfo == null || !Settings.getValues().mUsePersonalizedDicts
-                || pseudoTypedWordInfo.mSourceDict.mDictType != Dictionary.TYPE_MAIN || suggestionsContainer.size < 2
+                || pseudoTypedWordInfo.mSourceDict == null
+                || pseudoTypedWordInfo.mSourceDict.mDictType != Dictionary.TYPE_MAIN
+                || suggestionsContainer.size < 2
             ) return pseudoTypedWordInfo
             val goodNextSuggestions = nextWordSuggestions.filter { it.mScore >= 170 } // we only want reasonably often typed words, value may require tuning
             if (goodNextSuggestions.isEmpty()) return pseudoTypedWordInfo

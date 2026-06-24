@@ -1,0 +1,111 @@
+================================================================================
+FEATURE 3 — LOCAL WEIGHT TRAINING (NO AI) v1
+Related: Planned Features.txt §3; 03_autocorrect; 05_dictionaries
+================================================================================
+
+USER INTENT (summary)
+  Gradually bias autocorrect and swipe decode using only on-device data from
+  Features 1–2. Examples:
+    - "tye" often corrected to "the" → boost H, penalize Y on similar input;
+      heavily penalize outputting "tye" again.
+    - Multiple words wrong on same key → heatmap adjusts key hit size (Feature 5).
+  No cloud models, no LLM features.
+
+--------------------------------------------------------------------------------
+LAYERS OF LEARNING (stack — apply in order)
+--------------------------------------------------------------------------------
+
+LAYER 1 — KEY BIAS (spatial)
+  For each key k, tapBias[k] and swipeBias[k] in range [-Bmax, +Bmax].
+  Applied when scoring how well input matches letter at position i.
+  Example: Y tapBias = -0.3, H tapBias = +0.2 after many tye→the fixes.
+
+LAYER 2 — KEY PAIR / CONFUSION MATRIX (optional refinement)
+  confusion[mode][kFrom][kTo] += 1 when user replaces letter at kFrom with kTo.
+  On similar stroke, boost kTo over kFrom even if dictionary likes kFrom.
+
+LAYER 3 — WORD STRING WEIGHTS (lexical)
+  wordWeight[wrongString] negative (soft), naughty list = hard (Feature 4).
+  wordPairBoost[wrong→right] positive for autocorrect target selection.
+  User history dict already learns words — MUST coordinate so we don't ADD wrong
+  words to UserHistoryDictionary while penalizing in our layer (05 refactor note).
+
+LAYER 4 — STROKE CLUSTER WEIGHTS (swipe only)
+  Hash normalized stroke → bucket; associate with winning word after correction.
+  Similar hash on next swipe applies small boost to that word family.
+
+--------------------------------------------------------------------------------
+UPDATE RULES (simple, explainable math — tune constants later)
+--------------------------------------------------------------------------------
+
+On correction event (wrongWord → rightWord, mode M):
+  For each aligned position i where wrongWord[i] != rightWord[i]:
+    keyWrong = keyAt(i, wrongWord, inputTrace)
+    keyRight = keyAt(i, rightWord, intended)
+    tap/swipeBias[keyWrong] -= alpha
+    tap/swipeBias[keyRight] += alpha
+    confusion[M][keyWrong][keyRight] += 1
+
+  wordWeight[wrongWord] -= beta  (floor at -Wmax)
+  wordPairBoost[wrongWord][rightWord] += gamma
+
+On accepted commit with NO correction (user kept suggestion):
+  Slight positive reinforcement for keys in trace (small delta) — rewards good decode.
+
+Constants (starting points for simulation, not final):
+  alpha = 0.05 per event, beta = 0.1, gamma = 0.15
+  decay per week: multiply biases by 0.995 so old habits fade
+  clamp tap/swipeBias to [-0.5, +0.5] before applying to score
+
+SCORE APPLICATION (conceptual)
+  finalScore = nativeScore
+             + sum_i bias[mode][keyHypothesis(i)]
+             + wordWeight[candidate]
+             + pairBoost[typedLike][candidate]   // if applicable
+  HARD_BAN: if candidate in naughty list → score = -infinity (Feature 4)
+
+--------------------------------------------------------------------------------
+SIMILAR INPUT MATCHING (user: "especially when similar swipe or key order")
+--------------------------------------------------------------------------------
+  Define similarity:
+    TAP: Levenshtein on key-id sequence or code point string.
+    SWIPE: Fréchet distance lite — compare corner key sequence + K0/K_end.
+  If similarity > threshold S, apply 50–100% of stored bias from past events.
+
+--------------------------------------------------------------------------------
+ANTI-PATTERNS TO AVOID
+--------------------------------------------------------------------------------
+  - Learning from auto-commit user immediately backspaced (reject within 2s).
+  - Learning runner-up never chosen.
+  - Reinforcing contact-name autocorrect when no main dict (existing Suggest rule).
+  - Cross-mode leakage: never apply tapBias during swipe session.
+  - Runaway positive on common words ("the" always right) — cap per-word boost.
+
+--------------------------------------------------------------------------------
+COORDINATION WITH UserHistoryDictionary
+--------------------------------------------------------------------------------
+  Today: PersonalizationHelper adds committed words to history dict.
+  Plan:
+    - Only add to history when user explicitly accepts word OR no correction within
+      stability window.
+    - Penalized strings stay out of history even if committed once by mistake.
+    - Naughty ban blocks history insertion for that string.
+
+--------------------------------------------------------------------------------
+PERSISTENCE FORMAT (sketch)
+--------------------------------------------------------------------------------
+  File: user_learning.bin or Room DB tables:
+    key_bias_tap, key_bias_swipe, confusion_sparse, word_weights, stroke_buckets,
+    version, locale, layoutHash
+  Migration version field for future algorithm changes.
+
+--------------------------------------------------------------------------------
+TESTING TRAINING WITHOUT ML
+--------------------------------------------------------------------------------
+  Scripted correction sequences in unit tests:
+    Inject 10x tye→the, assert "the" beats "tye" on similar tap sequence.
+  Golden swipe polylines from fixtures (assets/) with expected word ranking shift.
+
+================================================================================
+END FEATURE 3 v1
+================================================================================

@@ -1,0 +1,35 @@
+DESIGN — Block 2 step 10: curve/path signature buckets + alignment offsets
+Beta target: 0.0.0.20 | ROADMAP_STEP 10 | DB schema v3 (additive)
+
+GOAL
+  On gated swipe commits, persist compressed path signatures and per-key finger
+  alignment offsets without wiping prior learning data.
+
+NEW FILES
+  HeatmapPathCapture_v1.kt — stash InputPointers before commitWord clears batch
+  HeatmapPathSignature_v1.kt — 16-point resample, 32-byte blob, ps_<16hex> hash
+  HeatmapPathBucketStore_v1.kt — heatmap_path_bucket seen_count + polyline_blob
+  HeatmapAlignmentOffsetStore_v1.kt — sum_dx/sum_dy/sample_count per key
+  HeatmapPathRecord_v1.kt — orchestrates bucket + offset on swipe commit
+  HeatmapInstrumentationSnapshot_v10.kt — status wiring (store block unchanged shape)
+
+HOOK
+  InputLogic.commitChosenWord — stashFromIme BEFORE WordComposer.commitWord
+  HeatmapLearningStore_v1.recordWordCommit — consume stash, record if SWIPE + layout
+
+DB v3 TABLES (additive migration from v2)
+  heatmap_path_bucket(locale, layout_hash, input_mode, signature_hash, seen_count, polyline_blob)
+  heatmap_alignment_offset(locale, layout_hash, input_mode, key_label, sample_count, sum_dx, sum_dy)
+
+TAP
+  Skipped until tap key positions captured (stash cleared for non-batch).
+
+VERIFY ON DEVICE
+  1. Install beta 0.0.0.20
+  2. Swipe several words in Kingshot (or any host)
+  3. Status → path bucket rows > 0, alignment offset rows > 0
+  4. Export JSON → learningStore.pathBucketRows, alignmentOffsetRows, swipeTracePointCount > 0
+  5. Force-stop → counts persist; prior commits + lh_ bounds unchanged
+
+NEXT: step 11 — see 45_DESIGN_block2_step11_granular_reset_v1.txt (DONE beta 0.0.0.21)
+       Block 3 decode — see 44_DESIGN_block3_swipe_letter_weight_and_beat_v1.txt

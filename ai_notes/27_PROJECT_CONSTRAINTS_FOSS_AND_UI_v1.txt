@@ -1,0 +1,29 @@
+================================================================================
+PROJECT CONSTRAINTS — FOSS + UI (maintainer notes, locked)
+================================================================================
+
+FREE AND OPEN-SOURCE (NON-NEGOTIABLE)
+  The entire Heatmap Smart Keyboard fork must remain free and open-source.
+  Every component we add must be:
+    - FLOSS-licensed (compatible with HeliBoard / project GPL-3.0 posture)
+    - On-device or built from source in this repo — no proprietary blobs
+    - No cloud AI, no paid APIs, no closed swipe libraries as end-state
+  Examples for later steps:
+    - Grammar/context filter: only OSS n-gram or rule packs (evaluate license before import)
+    - Dictionaries: existing HeliBoard .dict pipeline (user-installed)
+    - ML: classical on-device weights only; no LLM inference
+  Before adding any dependency: check license + document in ai_notes.
+
+PARAGRAPH WINDOW SLIDER (DO NOT CHANGE BEHAVIOR)
+  Maintainer approval: slider 500–3000 with light snap every 100, continuous
+  values between snaps — "perfect / fidget-toy satisfying."
+  KEEP EXACTLY:
+    - Range 500–3000
+    - stepSize / snap hint at 100 (SliderPreference intermediateSteps)
+    - Allow in-between values (not hard-locked to snap only)
+    - Default 1500
+  Do not "simplify" or replace with dropdown without explicit user request.
+
+================================================================================
+END
+================================================================================

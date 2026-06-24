@@ -1,0 +1,42 @@
+================================================================================
+
+DESIGN — Step 1.14 Metrics hooks (beta 0.0.0.17) — BLOCK 1 COMPLETE
+
+================================================================================
+
+
+
+HeatmapMetricsRecorder_v1
+
+  onCommitPathFinished — heatmap commit path duration (ms), ring of 32, prefs + logcat
+
+  onFlush — JVM heap used/max MB at flush
+
+  addPrefixBranchStub — counter for Block 3 trie narrowing (stays 0 until wired)
+
+
+
+STATUS + JSON export include metrics block
+
+
+
+VERIFY
+
+  Type words → logcat: metrics commit path Nms ...
+
+  Dismiss keyboard → metrics flush heap=XMB/YMB ...
+
+  Instrumentation status → — Metrics (beta 1.14) —
+
+
+
+NEXT: Block 2 — SQLite heatmap store (roadmap step 8)
+
+
+
+================================================================================
+
+END
+
+================================================================================
+

@@ -1,0 +1,95 @@
+================================================================================
+PERFORMANCE & MEMORY — constraints and answers v2
+User concern: nothing gigabyte-scale; smooth typing
+================================================================================
+
+--------------------------------------------------------------------------------
+DOES THE FULL DICTIONARY LOAD INTO RAM?
+--------------------------------------------------------------------------------
+Short answer: NO — not the entire word list as a flat string heap.
+
+HeliBoard / AOSP uses binary Patricia-trie dictionaries (.dict files):
+  - Memory-mapped or streamed access via native BinaryDictionary JNI.
+  - Main English main dict is large on disk (tens of MB) but NOT duplicated fully
+    into Java heap as String objects.
+  - Lookup is prefix traversal: exactly what our narrowing engine needs.
+
+For literal swipe narrowing:
+  - Operation: repeated prefix queries (e.g. "sta", "star", "start")
+  - Native API already optimized for autocomplete/gesture batch input.
+  - We must avoid copying entire trie into RAM or building duplicate word lists.
+
+Custom indices (only if profiling shows need):
+  - Small side index for first-letter → trie entry point (already implicit in trie).
+  - Do NOT load all words starting with "s" into a Set<String> — stay in native trie.
+
+--------------------------------------------------------------------------------
+ACTIVE SET DURING SWIPE (RAM hot path)
+--------------------------------------------------------------------------------
+  Dangerous: materialize thousands of prefixes for letter "s".
+  Safe approach:
+    - Keep native iterator / prefix state machine inside BinaryDictionary
+    - Or cap active branch count (top N by language model score) e.g. N=200
+    - Prune aggressively after each segment (STAR example drops stat/staf)
+
+  runnerUp list: fixed K entries (8–16) × short strings + floats ≈ few KB.
+
+--------------------------------------------------------------------------------
+HEATMAP + JOURNAL PERSISTENT STORAGE
+--------------------------------------------------------------------------------
+  Per locale + layout:
+    Key counters: ~40 keys × 2 modes × few ints ≈ kilobytes
+    Confusion sparse matrix: only non-zero pairs stored
+    Curve buckets: hash → stats (cap buckets e.g. 10k LRU evict oldest)
+    Word weights: sparse map typo strings (cap entries e.g. 5000 with LRU)
+    Paragraph ring: slider max 3000 chars UTF-16 ≈ 6 KB + WordSession metadata
+
+  WordSession stroke storage:
+    Simplified polyline: 20–50 points × 4 bytes ≈ 400 B per word
+    3000 chars / 5 chars per word ≈ 600 words theoretical max in window
+    Realistic 100 sessions in buffer ≈ 40–100 KB transient
+
+  SQLite or binary blob file estimate: single-digit MB after months of use
+    — NOT gigabytes. User can clear from settings.
+
+--------------------------------------------------------------------------------
+CPU / BATTERY
+--------------------------------------------------------------------------------
+  - Swipe decode on lift or throttled during stroke (every 50ms max) — profile on device
+  - Journal diff on flush (send, focus loss, window slide) — background thread
+  - Heatmap update batched (debounce 300ms after correction settles)
+  - No continuous cloud sync
+
+--------------------------------------------------------------------------------
+CLASSICAL ML ON DEVICE (allowed vs forbidden)
+--------------------------------------------------------------------------------
+  ALLOWED (user OK):
+    - Weighted counts, EMA biases, optional small logistic model trained on user's
+      correction features (key distances, curve hash, prefix depth)
+    - Training data = only this user's logs; inference local; no text generation
+
+  FORBIDDEN (user explicit):
+    - LLM / cloud AI suggestions
+    - Generative "guess what user meant" without dictionary + evidence
+    - Anything that could "hallucinate" words not in dictionary + user history
+
+--------------------------------------------------------------------------------
+INSTRUMENTATION TEST PLAN (before heavy decode)
+--------------------------------------------------------------------------------
+  1. Log prefix count per segment on device (detect explosion).
+  2. Measure suggest latency p50/p95 with literal prototype vs baseline.
+  3. Memory profiler: heap during 10 min swipe session.
+  4. Export anonymized stats to AI agent via debug log file (user mentioned returning
+     data to agent for discussion — use structured log, not full paragraphs).
+
+--------------------------------------------------------------------------------
+SUGGESTIONS
+--------------------------------------------------------------------------------
+  - Ship hard cap on active prefix branches (configurable in developer settings).
+  - Preload trie handle at keyboard open, not per keystroke.
+  - Compress curve signatures to 16–32 byte hash for storage.
+  - Weekly decay job prevents unbounded weight growth without deleting user skill.
+
+================================================================================
+END performance v2
+================================================================================

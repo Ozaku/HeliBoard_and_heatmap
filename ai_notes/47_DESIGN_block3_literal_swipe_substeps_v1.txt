@@ -1,0 +1,23 @@
+DESIGN — Block 3 literal swipe engine substeps
+================================================================================
+Beta track starts 0.0.0.23 | Cross-ref 44_, 20_v3, 41_
+
+13a  Tap/swipe gate (HeatmapSwipeTapGate_v1) — axis min displacement per start key
+13b  Beat/segment detection (HeatmapSwipeBeat_v1) — direction changes → letter slots
+13c  Segment→key inference (HeatmapSwipeSegmentInfer_v1) — coordinate map keyAt
+13d  Letter-weight scoring (HeatmapLiteralSwipeScore_v1) — 44_ first/middle/last
+14   Dictionary prefix narrow (HeatmapDictionaryPrefix_v1) — facilitator + prefix filter
+15   Lift commit + runner-ups in Suggest.kt literal path
+16   Dev toggle (HeatmapLiteralSwipeSettings_v1) — default OFF, legacy fallback
+17   Stroke replay harness (later)
+
+PIVOT (maintainer 2026-06): see 48_DESIGN_block3_dictionary_only_swipe_LOCKED_v1.txt
+  beta 0.0.0.23 interim re-ranked legacy glide — replace with dictionary-only decode.
+
+IMPLEMENTATION ORDER (interim 0.0.0.23: 13a–13d + 16 skeleton)
+  Gate → beat → infer → score → prefix filter → Suggest routing when toggle ON
+
+VERIFY (when gesture lib active)
+  1. Micro-drag on I → tap word I, not swipe/it
+  2. Toggle ON → logcat HeatmapLiteralSwipe tag shows beats + inferred letters
+  3. Toggle OFF → legacy gesture unchanged

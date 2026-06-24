@@ -26,6 +26,8 @@ import androidx.annotation.Nullable;
 
 import helium314.keyboard.event.Event;
 import helium314.keyboard.event.InputTransaction;
+import helium314.keyboard.heatmap.learning.HeatmapPathCapture_v3;
+import helium314.keyboard.heatmap.learning.HeatmapWordSlotSession_v7;
 import helium314.keyboard.keyboard.Keyboard;
 import helium314.keyboard.keyboard.KeyboardLayoutSet;
 import helium314.keyboard.keyboard.KeyboardSwitcher;
@@ -364,6 +366,9 @@ public final class InputLogic {
         if (mConnection.isBelatedExpectedUpdate(oldSelStart, newSelStart, oldSelEnd, newSelEnd, composingSpanStart, composingSpanEnd)) {
             return false;
         }
+        if (oldSelStart != newSelStart || oldSelEnd != newSelEnd) {
+            HeatmapWordSlotSession_v7.onSelectionChanged(mLatinIME, oldSelStart, oldSelEnd, newSelStart, newSelEnd);
+        }
         // TODO: the following is probably better done in resetEntireInputState().
         // it should only happen when the cursor moved, and the very purpose of the
         // test below is to narrow down whether this happened or not. Likewise with
@@ -557,6 +562,8 @@ public final class InputLogic {
         mConnection.endBatchEdit();
         mWordComposer.setCapitalizedModeAtStartComposingTime(
                 getActualCapsMode(settingsValues, keyboardSwitcher.getKeyboardShiftMode()));
+        // ai-note: heatmap step 1.6 — reserve WordSlot for swipe word in progress
+        HeatmapWordSlotSession_v7.onComposingStarted(mLatinIME, mConnection.getExpectedSelectionStart(), getCurrentInputEditorInfo());
     }
 
     /* The sequence number member is only used in onUpdateBatchInput. It is increased each time
@@ -883,6 +890,7 @@ public final class InputLogic {
                 // Either we have an actionLabel and we should performEditorAction with
                 // actionId regardless of its value.
                 performEditorAction(editorInfo.actionId);
+                notifyHeatmapImeAction(editorInfo);
             } else if (EditorInfo.IME_ACTION_NONE != imeOptionsActionId) {
                 // We didn't have an actionLabel, but we had another action to execute.
                 // EditorInfo.IME_ACTION_NONE explicitly means no action. In contrast,
@@ -892,6 +900,7 @@ public final class InputLogic {
                 // in any specific way: anything that is not IME_ACTION_NONE should be sent to
                 // performEditorAction.
                 performEditorAction(imeOptionsActionId);
+                notifyHeatmapImeAction(editorInfo);
             } else {
                 // No action label, and the action from imeOptions is NONE: this is a regular
                 // enter key that should input a carriage return.
@@ -1056,6 +1065,8 @@ public final class InputLogic {
         enterInlineEmojiSearchIfNeeded(codePoint, settingsValues);
 
         if (isComposingWord) {
+            // ai-note: heatmap step 1.6 — reserve WordSlot for word in progress (tap path)
+            HeatmapWordSlotSession_v7.onComposingStarted(mLatinIME, mConnection.getExpectedSelectionStart(), getCurrentInputEditorInfo());
             mWordComposer.applyProcessedEvent(event);
             // If it's the first letter, make note of auto-caps state
             if (mWordComposer.isSingleLetter()) {
@@ -1245,6 +1256,11 @@ public final class InputLogic {
         if (mWordComposer.isComposingWord()) {
             if (mWordComposer.isBatchMode()) {
                 final String rejectedSuggestion = mWordComposer.getTypedWord();
+                final EditorInfo heatmapEditor = getCurrentInputEditorInfo();
+                final String heatmapHost = heatmapEditor != null ? heatmapEditor.packageName : null;
+                HeatmapPathCapture_v3.stashFromIme(mWordComposer.getInputPointers(), true);
+                HeatmapWordSlotSession_v7.onBatchComposingRejected(
+                        mLatinIME, rejectedSuggestion, true, heatmapHost, heatmapEditor);
                 mWordComposer.reset();
                 mWordComposer.setRejectedBatchModeSuggestion(rejectedSuggestion);
                 if (!TextUtils.isEmpty(rejectedSuggestion)) {
@@ -1266,6 +1282,9 @@ public final class InputLogic {
         } else {
             if (mLastComposedWord.canRevertCommit() && inputTransaction.getSettingsValues().mBackspaceRevertsAutocorrect) {
                 final String lastComposedWord = mLastComposedWord.mTypedWord;
+                final EditorInfo heatmapEditor = getCurrentInputEditorInfo();
+                final String heatmapHost = heatmapEditor != null ? heatmapEditor.packageName : null;
+                HeatmapWordSlotSession_v7.onCommittedWordReverted(mLatinIME, heatmapHost, heatmapEditor);
                 revertCommit(inputTransaction);
                 StatsUtils.onRevertAutoCorrect();
                 StatsUtils.onWordCommitUserTyped(lastComposedWord, mWordComposer.isBatchMode());
@@ -1450,6 +1469,11 @@ public final class InputLogic {
     }
 
     void unlearnWord(final String word, final SettingsValues settingsValues, final int eventType) {
+        if (eventType == Constants.EVENT_BACKSPACE) {
+            final EditorInfo heatmapEditor = getCurrentInputEditorInfo();
+            final String heatmapHost = heatmapEditor != null ? heatmapEditor.packageName : null;
+            HeatmapWordSlotSession_v7.onFieldWordDeleted(mLatinIME, word, mConnection.getExpectedSelectionStart(), heatmapHost, heatmapEditor);
+        }
         final NgramContext ngramContext = mConnection.getNgramContextFromNthPreviousWord(settingsValues.mSpacingAndPunctuations, 2);
         final long timeStampInSeconds = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
         mDictionaryFacilitator.unlearnFromUserHistory(word, ngramContext, timeStampInSeconds, eventType);
@@ -2021,6 +2045,11 @@ public final class InputLogic {
         return mLatinIME.getCurrentInputEditorInfo();
     }
 
+    private void notifyHeatmapImeAction(final EditorInfo editorInfo) {
+        final String host = editorInfo != null ? editorInfo.packageName : null;
+        HeatmapWordSlotSession_v7.onImeAction(mLatinIME, host, mConnection, editorInfo);
+    }
+
     /**
      * Get n-gram context from the nth previous word before the cursor as context
      * for the suggestion process.
@@ -2434,7 +2463,24 @@ public final class InputLogic {
         // what user typed. Note: currently this is done much later in
         // LastComposedWord#didCommitTypedWord by string equality of the remembered
         // strings.
+        // ai-note: heatmap 1.9 — capture gesture mode before commitWord clears batch state
+        final boolean heatmapGestureInput = mWordComposer.isBatchMode();
+        // ai-note: Block 2 step 10 — stash swipe polyline before commitWord clears InputPointers
+        HeatmapPathCapture_v3.stashFromIme(mWordComposer.getInputPointers(), heatmapGestureInput);
         mLastComposedWord = mWordComposer.commitWord(commitType, chosenWord, separatorString, ngramContext);
+        // ai-note: heatmap — finalize WordSlot, WordSession, paragraph journal
+        final int separatorLength = (separatorString != null) ? separatorString.length() : 0;
+        final EditorInfo heatmapEditor = getCurrentInputEditorInfo();
+        final String heatmapHost = heatmapEditor != null ? heatmapEditor.packageName : null;
+        HeatmapWordSlotSession_v7.onWordCommitted(
+                mLatinIME,
+                chosenWord,
+                separatorLength,
+                commitType,
+                heatmapGestureInput,
+                mLastComposedWord.mTypedWord,
+                heatmapHost,
+                heatmapEditor);
         if (DebugFlags.DEBUG_ENABLED) {
             long runTimeMillis = SystemClock.elapsedRealtime() - startTimeMillis;
             Log.d(TAG, "commitChosenWord() : " + runTimeMillis + " ms to run "

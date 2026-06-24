@@ -1,0 +1,62 @@
+================================================================================
+
+PER-MODE HEATMAP AUTOCORRECT TOGGLES — v1 (beta 0.0.0.11)
+
+================================================================================
+
+
+
+USER GOAL
+
+  Tap OFF + swipe ON: HeliBoard autocorrect for taps unchanged; Heatmap System-2
+
+  only when swipe toggle ON and Block 5 implemented. Learning always on if master on.
+
+
+
+PREFS (packageName_preferences, same as learning slider)
+
+  heatmap_tap_autocorrect_enabled   default false
+
+  heatmap_swipe_autocorrect_enabled default false
+
+
+
+CODE
+
+  HeatmapAutocorrectSettings_v1.kt  — read via HeatmapCrossProcessPrefs_v2
+
+  HeatmapAutocorrectPolicy_v1.kt    — useHeliBoardAutocorrectForMode / shouldApply...
+
+  isHeatmapAutocorrectImplemented() — false until Block 5 steps 22–25
+
+
+
+UI
+
+  Heatmap Smart Keyboard → section "Autocorrect (per input mode)" + two switches
+
+  Status block: — Autocorrect routing (beta) — Tap/Swipe labels
+
+
+
+LOGCAT
+
+  HeatmapInstr commit ... route=heliboard-ac|heatmap-ac
+
+
+
+BLOCK 5 WIRING (later)
+
+  InputLogic / gesture commit: if shouldApplyHeatmapAutocorrect(mode) → System-2;
+
+  else skip mutation; never change HeliBoard Settings > Text correction prefs.
+
+
+
+================================================================================
+
+END v1
+
+================================================================================
+

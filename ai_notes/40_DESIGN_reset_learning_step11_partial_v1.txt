@@ -1,0 +1,21 @@
+DESIGN — Reset all learning (roadmap step 11 partial, beta 0.0.0.18+)
+================================================================================
+UI: Heatmap Smart Keyboard → Learning data → Reset all learning
+  HeatmapLearningResetConfirmDialog_v1 — 5s countdown; Yes disabled until 0; NO!! dismisses
+
+WIPE (HeatmapLearningReset_v1.wipeAllTrainingData)
+  - heatmap_store.db (HeatmapLearningDatabase_v1.wipePersistentStore)
+  - session_export*.json in files/heatmap_learning/
+  - All SharedPreferences keys starting with heatmap_ EXCEPT user settings:
+    learning enabled, paragraph window, tap/swipe autocorrect toggles, auto file dump
+  - IME in-memory: HeatmapWordSlotSession_v4.clearInMemorySessionAfterTrainingWipe (no flush)
+
+NOT YET (full step 11 spec)
+  - Separate reset key geometry / swipe biases buttons
+  - Gesture research DB (heliboard.db gesture tables) — out of scope unless user asks
+
+VERIFY (user, next build)
+  1. Note Persisted commits in status
+  2. Reset all learning → wait 5s → Yes
+  3. Status shows 0 persisted commits; force-stop → still 0
+  4. Toggles unchanged (learning still on if it was on)

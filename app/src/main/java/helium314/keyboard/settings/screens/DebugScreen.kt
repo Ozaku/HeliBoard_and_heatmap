@@ -11,6 +11,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import helium314.keyboard.keyboard.KeyboardSwitcher
+import helium314.keyboard.heatmap.learning.HeatmapWordSlotSession_v7
 import helium314.keyboard.latin.BuildConfig
 import helium314.keyboard.latin.DictionaryDumpBroadcastReceiver
 import helium314.keyboard.latin.DictionaryFacilitator
@@ -40,6 +41,7 @@ fun DebugScreen(
         DebugSettings.PREF_SHOW_SUGGESTION_INFOS,
         DebugSettings.PREF_FORCE_NON_DISTINCT_MULTITOUCH,
         DebugSettings.PREF_SLIDING_KEY_INPUT_PREVIEW,
+        DebugSettings.PREF_HEATMAP_LEARNING_STATUS,
         R.string.prefs_dump_dynamic_dicts
     ) + DictionaryFacilitator.DYNAMIC_DICTIONARY_TYPES.map { DebugSettings.PREF_KEY_DUMP_DICT_PREFIX + it }
     SearchSettingsScreen(
@@ -93,6 +95,13 @@ private fun createDebugSettings(context: Context) = listOf(
     },
     Setting(context, DebugSettings.PREF_SLIDING_KEY_INPUT_PREVIEW, R.string.sliding_key_input_preview, R.string.sliding_key_input_preview_summary) { def ->
         SwitchPreference(def, Defaults.PREF_SLIDING_KEY_INPUT_PREVIEW)
+    },
+    Setting(context, DebugSettings.PREF_HEATMAP_LEARNING_STATUS, R.string.heatmap_learning_status_title) {
+        Preference(
+            name = stringResource(R.string.heatmap_learning_status_title),
+            description = HeatmapWordSlotSession_v7.debugSummary(context),
+            onClick = { /* read-only status */ },
+        )
     },
 ) + DictionaryFacilitator.DYNAMIC_DICTIONARY_TYPES.map { type ->
     Setting(context, DebugSettings.PREF_KEY_DUMP_DICT_PREFIX + type, R.string.button_default) {

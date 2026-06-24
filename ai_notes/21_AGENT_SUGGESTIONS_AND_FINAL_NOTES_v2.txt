@@ -1,0 +1,101 @@
+================================================================================
+FINAL NOTES, SUGGESTIONS & COMMENTS v2 (post user Q&A)
+No code — planning closure for this iteration
+================================================================================
+
+--------------------------------------------------------------------------------
+ANSWERS RECAP (your seven points)
+--------------------------------------------------------------------------------
+1. Maximum compatibility — documented in 00 v2, 17 v2, 20 v2.
+2. Common Typo List + tap escape + swipe-delete-tap matcher — 13 v2, 17 v2.
+3. "Loops" explained in 17 v2 — curves/loops learned over time, literal geometry first.
+4. Slider 500–3000, snap 100, continuous between — 18 v2, 16 v2.
+5. Sensitive fields learning toggle, default off, privacy copy — 18 v2.
+6. All settings under Heatmap Smart Keyboard; swipe resize optional — 18 v2, 14 v1 note.
+7. Unban keeps all swipe/letter/word data — 13 v2, 17 v2, 12 v1 layer model.
+
+--------------------------------------------------------------------------------
+HYBRID SWIPE — PLAIN EXPLANATION FOR YOU
+--------------------------------------------------------------------------------
+  It is NOT two keyboards. It is a safe build order:
+    (1) Keep the app working while we collect your heatmap data.
+    (2) Optionally let old suggest run in parallel for comparison during testing.
+    (3) Switch to YOUR literal dictionary-narrowing engine as the main swipe brain.
+  End goal = only your engine + normal .dict files, no swipe library.
+
+--------------------------------------------------------------------------------
+YOUR STARTING WALKTHROUGH
+--------------------------------------------------------------------------------
+  Captured as the canonical algorithm in:
+    20_FEATURE_literal_swipe_dictionary_narrowing_v2.txt
+  That file should be the reference when coding starts.
+
+--------------------------------------------------------------------------------
+DICTIONARY IN RAM
+--------------------------------------------------------------------------------
+  See 19_PERFORMANCE_AND_MEMORY_v2.txt — expect megabytes mapped, not gigabytes heap.
+  Risk is bad engineering (copying all "s*" words into Java), not the dict file itself.
+
+--------------------------------------------------------------------------------
+ML WITHOUT AI HALLUCINATION
+--------------------------------------------------------------------------------
+  Recommended stack:
+    - Counts + weights (primary)
+    - Optional: tiny on-device classifier (input features → which runnerUp word)
+      trained only from your corrections, outputs pick from existing candidates ONLY
+    - Never generate novel words outside dictionary + user dict + explicit new-word flow
+
+--------------------------------------------------------------------------------
+SUGGESTIONS (agent recommendations)
+--------------------------------------------------------------------------------
+
+S1. Word slot ID
+    Every composing word gets a monotonic slotId for the session so "tap twice" and
+    swipe-delete-tap rules never bleed into the next word.
+
+S2. Confidence gate before commit
+    On final swipe lift, if top word beats second by < margin, show strip instead of
+    auto-commit — reduces wrong STARTING-style commits while learning is immature.
+
+S3. Structured debug export for AI review
+    Settings toggle exports last N sessions as JSON (no full paragraphs unless user opts in):
+    {swipePoints, runnerUp, outcome, corrections} for agent-assisted tuning in chat.
+
+S4. Cap prefix branching
+    Hard limit active trie branches during "s*" phase; rely on next letters to narrow.
+    Prevents RAM spikes on first letter.
+
+S5. Curve template library per user
+    After ~50 corrections involving curves, cluster curve hashes → preferred letter.
+    This is where "loops" get good without manual coding every shape.
+
+S6. Common Typo List vs dictionary add
+    When tap-after-swipe finds no match, offer "Add [word] to dictionary?" once — do not
+    auto-add (prevents polluting user dict with typos).
+
+S7. Testing phrases
+    Maintain assets/test_swipes.txt with polylines for PAUSE, PHASE, PLASTIC, STARTING
+    for regression on each phone test pass.
+
+S8. Rename sweep before code
+    When coding starts, grep "naughty" and replace with CommonTypo in user strings only;
+    keep internal names consistent in one pass.
+
+--------------------------------------------------------------------------------
+REMAINING OPEN ITEMS (need your input later, not blocking notes)
+--------------------------------------------------------------------------------
+  - Runner-up always in strip vs only when uncertain?
+  - Auto-promotion counts for Common Typo List (3/8 still OK?)
+  - Export/import learning backup wanted?
+  - Visible heatmap overlay for curious users?
+
+--------------------------------------------------------------------------------
+DOCUMENT MAP FOR NEXT SESSION
+--------------------------------------------------------------------------------
+  Start: README.md → 00_MASTER_PLAN_v2.txt → 20_FEATURE_literal_swipe_*.txt
+  UX/legal: 18_SETTINGS, 13 common typo
+  Explainers: 17 glossary, 19 performance, this file
+
+================================================================================
+END final notes v2
+================================================================================

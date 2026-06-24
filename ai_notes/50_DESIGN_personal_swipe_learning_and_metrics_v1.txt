@@ -1,0 +1,245 @@
+================================================================================
+PERSONAL SWIPE LEARNING + ACCURACY METRICS (Block 3 decode + Block 4 apply)
+Maintainer session 2026-06 | Extends 49_, 44_, 46_, 23_ P3
+================================================================================
+
+PHILOSOPHY (locked)
+  Swipe errors are personal and repeatable (overshoot last letter, miss E, T/Y
+  neighbors). Crowd AI prediction is exactly what we avoid. Instead:
+    - Collect evidence during typing (zero added latency on hot path)
+    - Apply small weight deltas when keyboard closes / IME idle
+    - Bias letter likelihood at decode time (direction-aware), NOT whole-word swap
+    - Invisible key resize is Block 8 — LAST resort; weight bias is primary
+
+--------------------------------------------------------------------------------
+1. CORRECTION SIGNALS (what trains swipe decode)
+--------------------------------------------------------------------------------
+  Priority (strongest → weakest):
+
+  S1  TAP replaces SWIPE at same WordSlot (strongest personal signal)
+      User swiped "fired" → deleted/backspaced → tap-typed "fire" at same slot.
+      Interpretation: overshoot extra last letter on this path class.
+
+  S2  In-field edit in paragraph window (retroactive)
+      Committed swipe word later edited to different word (Block 4 step 20).
+
+  S3  Strip alternate pick
+      User chose runner-up instead of auto-committed top word.
+
+  S4  Commit-time typed≠committed (HeliBoard AC on swipe — weaker for swipe path)
+      Still recorded in word_correction / letter_confusion (step 12).
+
+  S5  Raw swipe commit without fix (negative evidence only after many repeats)
+      Do not punish on first occurrence.
+
+  Each signal stores:
+    - slotId, inputMode=SWIPE, path_signature (step 10), beat geometry hash
+    - inferred pathLetters vs final word letters (per-position diff)
+    - approach vectors per beat (for directional bias)
+    - layoutHash + locale + input_mode segregated
+
+--------------------------------------------------------------------------------
+2. PATTERN CLASSES (examples → learned adjustment)
+--------------------------------------------------------------------------------
+
+  P2a  LAST-LETTER OVERSHOOT ("fired" → "fire")
+    Detect: final committed char extra vs user fix; path end grazes next key
+    Aggregate: overshoot_last_rate per layout
+    Apply: soften 44_ w_last strictness globally when rate > threshold
+            + path_bucket link for similar end geometry
+
+  P2b  LAST-LETTER UNDERSHOOT (user adds missing E)
+    Detect: fix adds letter at end; stroke passed near E key but didn't anchor
+    Apply: boost likelihood for end-region near-miss keys when approach matches
+
+  P2c  NEIGHBOR CONFUSION ("iy" swipe → user fixes to "it")
+    Detect: letter_confusion y→t at LAST or MIDDLE band; keys adjacent on map
+    Apply: directional bias δ(t|approach_from_above) up, δ(y|same) down
+    Trie guarantee: "iy" never emitted — not in dictionary prefix tree
+
+  P2d  MULTI-BEAT DRIFT ("telephone" vs "trlwohine")
+    Detect: align correction to beats; multiple position diffs in one session
+    Apply: per-beat confusion updates + path_signature bucket → word mapping
+            (NOT one-shot global rule; accumulates over sessions)
+
+  P2e  SYSTEMATIC MISSING VOWEL / consonant row
+    Detect: repeated same-position letter class errors across words
+    Apply: row-aware likelihood nudge at middle beats only
+
+  All adjustments are SMALL per event (caps in section 4); decay stale habits (P3).
+
+--------------------------------------------------------------------------------
+3. WEIGHT TYPES (bias-first, not resize-first)
+--------------------------------------------------------------------------------
+
+  W1  LETTER LIKELIHOOD BIAS (primary)
+      Per (layout, mode=SWIPE, key_label): additive logit or multiplicative factor
+      Applied in Phase C key likelihood (49_ section 8)
+
+  W2  DIRECTIONAL BIAS (user-requested)
+      Per (layout, key_label, approach_octant): δ weight
+      Octant = incoming stroke direction into key (8 compass bins)
+      Example: strokes descending into T from above → boost T vs Y when dist tie
+
+  W3  POSITION-BAND BIAS
+      Per (layout, from_key → to_key, FIRST|MIDDLE|LAST): from step 12 letter_confusion
+      MIDDLE updates faster than FIRST (44_ / 46_)
+
+  W4  PATH SIGNATURE → WORD AFFINITY
+      Per (layout, ps_hash): boosted words user confirmed on similar strokes
+      From step 10 path_bucket + strip pick / tap-replace training
+
+  W5  END-ANCHOR POLICY OFFSET
+      Global per-user per-layout: overshoot_assumption_strength 0..1
+      Derived from P2a aggregate rate
+
+  NOT IN V1 APPLY LOOP:
+      Invisible key resize / hit-box grow (Block 8 step 33) — only after bias plateaus
+
+  Storage (schema v5+ proposal):
+    heatmap_swipe_letter_bias (locale, layout_hash, key_label, sum_weight, sample_count)
+    heatmap_swipe_directional_bias (..., approach_octant, ...)
+    heatmap_swipe_overshoot_meta (layout_hash, overshoot_last_count, total_swipe_fixes)
+
+  Read: memory cache loaded at IME start; stale OK for one session.
+
+--------------------------------------------------------------------------------
+4. CONSERVATIVE UPDATE RULES (no lock-in)
+--------------------------------------------------------------------------------
+  Per correction event:
+    - Max single bump: +1..+3 weight units (band-dependent, same as 46_)
+    - Per-row cap: LETTER_BIAS_CAP (e.g. ±40)
+    - Require min evidence: neighbor bias needs ≥3 same pair corrections OR
+      ≥2 within 7 days before strong effect
+
+  Decay (23_ P3):
+    - On keyboard close batch: weights *= 0.999 for rows not reinforced in 30d
+    - User can reset swipe biases (step 11 partial — already have path reset)
+
+  Never:
+    - Auto-commit a different whole word because bias changed
+    - Add non-dictionary words from bias alone
+    - Import external swipe library statistics
+
+--------------------------------------------------------------------------------
+5. DEFERRED APPLY PIPELINE (no typing latency)
+--------------------------------------------------------------------------------
+
+  HOT PATH (finger down → lift):
+    READ biases from in-memory cache only (O(1) map lookup per key)
+    APPEND raw events to SQLite / session buffers (already instrumented)
+    NO weight math on UI or decode-critical path beyond cached lookup
+
+  COLD PATH (keyboard closed / IME onFinishInputView / process idle):
+    HeatmapSwipeLearningBatch_v1.run():
+      1. Scan new corrections since last_apply_ms
+      2. Classify patterns P2a–P2e
+      3. Update bias tables (transaction)
+      4. Recompute overshoot_assumption_strength
+      5. touch_meta last_apply_ms
+    Budget: may take 50–500ms after close — user does not wait
+
+  Optional: nightly cap if user never closes keyboard (flush every 30 min background)
+
+--------------------------------------------------------------------------------
+6. TAP-AFTER-SWIPE AT SAME SLOT (critical path)
+--------------------------------------------------------------------------------
+  Already in roadmap S1 / Block 4 step 21.
+
+  Flow:
+    1. Swipe commits word Ws to slot N (runnerUps stored)
+    2. User deletes Ws in field OR backspaces to retype
+    3. Tap commits Wt at same slot N
+    4. Record SwipeCorrectionEvent(slot=N, Ws→Wt, path_blob, beats)
+
+  Decode effect:
+    - Immediate: next stroke with similar ps_hash boosts Wt in runnerUps
+    - Cold batch: update directional + neighbor biases from letter diff align
+
+  Gentle AC (Block 5): separate; learning always on if master toggle on.
+
+--------------------------------------------------------------------------------
+7. HOW LEARNING MEETS DECODE (49_ integration)
+--------------------------------------------------------------------------------
+
+  Phase C key likelihood:
+    baseLikelihood(key, point) * (1 + letterBias[key])
+    * directionFactor(key, approach_octant)
+    * confusionBoost(from_hypothesis → key)   // step 12 + beat align
+
+  Phase D end anchor:
+    effective_w_last = 44_ w_last * (1 - overshoot_assumption_strength)
+
+  Phase E trie narrow:
+    path_bucket affinity adds score bonus; never bypasses dictionary
+
+  Invalid strings ("iy", "trlwohine"):
+    - Trie kills impossible prefixes early
+    - Geometry + bias only reorder VALID dictionary words
+
+--------------------------------------------------------------------------------
+8. ACCURACY METRICS (detect real improvement)
+--------------------------------------------------------------------------------
+
+  Per-session / rolling 7-day (stored heatmap_swipe_metrics or prefs export):
+
+  M1  SWIPE_CORRECTION_RATE
+      = swipe commits later corrected (S1+S2+S3) / total swipe commits
+      LOWER is better; primary health metric
+
+  M2  TAP_AFTER_SWIPE_RATE
+      = S1 events / swipe commits
+      Track separately — high rate means decode wrong often OR user prefers tap fix
+
+  M3  FIRST_SWIPE_SUCCESS
+      = swipe commits with no correction within 60s / total
+      HIGHER is better; user-facing "accuracy"
+
+  M4  NEIGHBOR_PAIR_ERROR_RATE
+      Top-K adjacent key pairs (t/y, i/o): errors / opportunities
+      Should DROP as W2+W3 learn
+
+  M5  OVERSHOOT_LAST_RATE
+      P2a events / swipe fixes; drives W5 transparency in status screen
+
+  M6  REPLAY_HARNESS_SCORE (dev / optional user)
+      Fixed stroke fixtures from user's exports; word match % before vs after
+      Block 3 step 17
+
+  M7  DECODE_LATENCY_P95
+      Must not regress while learning enabled (49_ perf budget)
+
+  Reporting:
+    - Status screen: M1, M3, M5 last 7d + delta vs prior 7d
+    - JSON export includes metrics block
+    - "Improving?" = M1 down AND M3 up AND M7 stable (simple rule v1)
+
+  A/B sanity: after N cold-batch applies, compare M1 rolling window; if worse
+  for 14d, dampen learning rate (auto, logged) — optional v1.1 safeguard
+
+--------------------------------------------------------------------------------
+9. IMPLEMENTATION PHASES (after 49_ Block 3 decode core)
+--------------------------------------------------------------------------------
+  Block 4 step 18  Load letter + directional bias cache at IME start
+  Block 4 step 19  Apply biases in decode Phase C/E (wire 50_ section 7)
+  Block 4 step 20  Retroactive paragraph correction → SwipeCorrectionEvent
+  Block 4 step 21  Tap-after-swipe same slot trainer (S1)
+  New step 21b     HeatmapSwipeLearningBatch_v1 cold apply on IME close
+  New step 21c     heatmap_swipe_* bias tables schema v5
+  New step 21d     Metrics M1–M7 + status/export
+  Block 8 later    Geometry resize only if bias metrics plateau
+
+--------------------------------------------------------------------------------
+10. USER APPROVAL ADDITIONS (add to 49_ checklist)
+--------------------------------------------------------------------------------
+  [ ] Tap-replace-swipe at same slot is primary training signal
+  [ ] Overshoot-last-letter learned globally + per path signature
+  [ ] Neighbor confusion (T/Y) via directional weight bias
+  [ ] Multi-letter fixes decomposed per beat, not one-shot word magic
+  [ ] Learning applies on keyboard close, not mid-stroke
+  [ ] Bias-first; invisible resize deferred to Block 8
+  [ ] Correction rate + first-swipe-success metrics prove improvement
+
+================================================================================
+END 50_ v1
+================================================================================

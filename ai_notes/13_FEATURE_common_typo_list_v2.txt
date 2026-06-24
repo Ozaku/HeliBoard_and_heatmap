@@ -1,0 +1,67 @@
+================================================================================
+FEATURE 4 (v2) — COMMON TYPO LIST
+Supersedes naming in 13_FEATURE_naughty_list_v1.txt (keep v1 for history)
+================================================================================
+
+USER-VISIBLE NAME: "Common Typo List"
+Internal/code name TBD (e.g. CommonTypoList, not NaughtyList).
+
+--------------------------------------------------------------------------------
+PURPOSE
+--------------------------------------------------------------------------------
+  Track strings the user repeatedly produces by mistake via SWIPE or AUTOCORRECT,
+  suppress them from automatic output, and bias toward user's usual correction.
+  NOT meant to frustrate deliberate tap typing.
+
+--------------------------------------------------------------------------------
+AUTOMATIC PROMOTION (tune on device — see 23_MAINTAINER_FEEDBACK_RESOLVED_v3)
+--------------------------------------------------------------------------------
+  Starter density examples: 5+/day × 3 days; OR 20+/day; OR 15+/hour; OR 5+/15min
+  for same wrong string → strong negative + list entry. Soft weight earlier (F5).
+  Hard (list entry): blocked from swipe decode + forced autocorrect target if known
+    (e.g. tye → the).
+  FUNCTION-WORD GUARD: explicit allowlist (the, and, of, …) — NOT "all 2–3 letter
+  words immune" (would break tye/the).
+  Does NOT block:
+    - Same word tap-typed twice in a row at the same word slot (escape hatch).
+    - New word candidate after swipe-delete-tap flow with no almost-match.
+
+--------------------------------------------------------------------------------
+SWIPE → DELETE → TAP FIX (critical UX)
+--------------------------------------------------------------------------------
+  1. Swipe produces word W_wrong; session stores swipeTrace + runnerUp[].
+  2. User deletes W_wrong in field; same word slot stays active in journal.
+  3. User tap-types; autocorrect aggressiveness MINIMAL for this slot.
+  4. Matcher compares tap key sequence to runnerUp words and partial prefixes.
+  5. If match found → suggest or silently apply matching runnerUp (user setting?).
+  6. If no match → treat as intentional new vocabulary (future: add to user dict).
+
+  Slot resets when user moves to next word (space/punctuation/new gesture).
+
+--------------------------------------------------------------------------------
+SETTINGS UI (under Heatmap Smart Keyboard Settings)
+--------------------------------------------------------------------------------
+  Screen: Common Typo List
+    - List: string, correction target, hit count, state (soft/hard)
+    - Actions per row:
+        Remove from list (unban) — keeps learning data
+        Remove from user dictionary only (optional, independent)
+        Pin / manually add typo string
+    - Help text: explains swipe/autocorrect vs tap escape hatch
+
+--------------------------------------------------------------------------------
+DATA RETAINED ON UNBAN
+--------------------------------------------------------------------------------
+  KEEP: swipe signatures that led to typo, letter weights, word-pair counts,
+        curve associations, negative word weight (may soften slightly optional).
+  REMOVE: hard block flag only.
+
+--------------------------------------------------------------------------------
+RELATION TO USER DICTIONARY
+--------------------------------------------------------------------------------
+  Removing word from user dictionary does NOT remove from Common Typo List and
+  does NOT erase training weights (per original user intent, still valid).
+
+================================================================================
+END Common Typo List v2
+================================================================================

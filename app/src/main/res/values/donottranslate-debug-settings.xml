@@ -18,4 +18,6 @@
     <string name="sliding_key_input_preview_summary" translatable="false">Display visual cue while sliding from Shift or Symbol keys</string>
     <!-- Title of the settings group for dumping dictionary files that have been created on the device [CHAR LIMIT=35] -->
     <string name="prefs_dump_dynamic_dicts" translatable="false">Dump dictionary</string>
+    <!-- ai-note: heatmap learning beta 0.0.0.1 instrumentation readout -->
+    <string name="heatmap_learning_status_title" translatable="false">Heatmap learning (beta)</string>
 </resources>

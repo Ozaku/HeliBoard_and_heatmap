@@ -1,0 +1,81 @@
+================================================================================
+SETTINGS — "Heatmap Smart Keyboard" category v2
+All new learning/swipe features grouped here (user request)
+================================================================================
+
+LOCATION (proposal)
+  HeliBoard Settings → new top-level or sub-screen:
+    Title: "Heatmap Smart Keyboard"
+    Summary: "Personal swipe learning, typo list, and privacy controls"
+
+--------------------------------------------------------------------------------
+SECTION: Learning & privacy
+--------------------------------------------------------------------------------
+  [Toggle] Enable heatmap learning (master) — default ON when category used?
+  [Toggle] Learn in sensitive fields (passwords/private browsing) — default OFF
+           BUILT-IN (beta 0.0.0.16): password, no-personalized-learning, email never recorded.
+           Optional override toggle still planned (roadmap step 40).
+  [Info text]  All learning data stays on this device. Nothing is uploaded,
+               sold, or sent to AI services. (Plain language, not legalese only.)
+
+  [Slider] Correction memory window — 500 to 3000 characters
+           Snap hints every 100; continuous values between allowed
+           Default: 1500
+
+--------------------------------------------------------------------------------
+SECTION: Autocorrect (per input mode) — beta 0.0.0.11 UI; behavior Block 5
+--------------------------------------------------------------------------------
+  [Toggle] Heatmap autocorrect for tap typing — default OFF
+           OFF: HeliBoard Text correction / autocorrect unchanged for tapped words.
+           ON:  Heatmap System-2 may replace committed tap words when implemented.
+           Learning from taps still runs when master learning is ON.
+
+  [Toggle] Heatmap autocorrect for swipe typing — default OFF
+           OFF: HeliBoard glide autocorrect unchanged for swiped words.
+           ON:  Heatmap System-2 may replace committed swipe words when implemented.
+           Example: tap OFF + swipe ON → learn from both; only swipe path uses Heatmap AC.
+
+  HeliBoard global autocorrect / suggestion settings are never overridden by these
+  toggles when OFF for that mode. When ON but Block 5 not shipped, UI shows armed but
+  runtime still uses HeliBoard (HeatmapAutocorrectPolicy_v1 implementation gate).
+
+  [Button] Clear all learning data (heatmap, weights, typo list stats)
+  [Button] Reset key geometry to default (tap / swipe separate sub-confirm)
+
+--------------------------------------------------------------------------------
+SECTION: Swipe engine (literal decode)
+--------------------------------------------------------------------------------
+  [Toggle] Use literal swipe engine (when implemented) — default ON eventually
+  [Info]   After swipe: top word committed to field; runner-ups always in strip
+           (user picks alternate → trains that swipe pattern). Locked v3.
+  [Info]   Explains progressive dictionary narrowing (link to help doc optional)
+
+--------------------------------------------------------------------------------
+SECTION: Typing geometry
+--------------------------------------------------------------------------------
+  [Toggle] Adjust tap key hit areas from learning — default ON (conservative)
+  [Toggle] Adjust swipe key hit areas from learning — default OFF (user request:
+           make optional; swipe primarily uses bias not resize)
+  [Slider] Max key size change — up to 22% (if exposed; else fixed constant)
+
+--------------------------------------------------------------------------------
+SECTION: Common Typo List
+--------------------------------------------------------------------------------
+  [Navigation] Open Common Typo List screen (list UI per 13_FEATURE v2)
+
+--------------------------------------------------------------------------------
+SECTION: Advanced / debug (optional v1)
+--------------------------------------------------------------------------------
+  [Toggle] Developer logging (swipe path, runnerUp, native vs literal diff)
+  [Toggle] Show debug heatmap overlay — OPEN
+  [Navigation] Export learning backup — OPEN (future)
+
+--------------------------------------------------------------------------------
+NOT IN THIS CATEGORY
+--------------------------------------------------------------------------------
+  Standard HeliBoard: theme, languages, install dictionary, glide typing enable.
+  Glide toggle stays where it is; our engine replaces behavior behind it later.
+
+================================================================================
+END settings spec v2
+================================================================================

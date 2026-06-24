@@ -1,0 +1,80 @@
+DESIGN — Block 3 LOCKED: dictionary-only literal swipe (maintainer 2026-06)
+================================================================================
+Supersedes interim approach in 47_ where literal engine re-ranked legacy glide output.
+Cross-ref: 20_v3, 44_, 46_, 25_ roadmap Block 3
+
+TERMINOLOGY NOTE (2026-06 clarification)
+  User WANTS swipe/glide typing. "Dictionary-only" means word CANDIDATES come from
+  HeliBoard .dict trie + tap-installed dicts + corrections — NOT from external
+  swipe library proximity decode. See 49_DESIGN_block3_full_swipe_system_plan_v1.txt
+
+USER INTENT (locked)
+  Swipe commits words chosen ONLY from:
+    1. HeliBoard bundled dictionary (main .dict / trie)
+    2. User personal corrections (heatmap letter_confusion, word_correction, path buckets)
+    3. Other TAP-capable dictionaries the user installs (personal, contacts, etc.)
+  NEVER from:
+    - Installed swipe/gesture libraries (libjni_latinime user import, proprietary gesture policy)
+    - Gesture-library suggestion output, proximity grids, or gesture training data
+
+MUTUAL EXCLUSION (locked) — external SWIPE LIB only, not swipe feature itself
+  Heatmap swipe typing ON  → external swipe lib decode OFF (no GestureSuggestPolicy)
+  User enables external swipe lib → Heatmap swipe auto-OFF
+  Swipe trail drawing may continue; decode must not call getSuggestionResults GESTURE session
+  Full plan: 49_ section 3
+
+DECODE PIPELINE (target architecture)
+  1. Tap/swipe gate (13a) — min axis span per start key; micro-drag = tap
+  2. Anchor first letter from stroke START key region (strict)
+  3. Walk stroke geometry:
+     - Sharp angle / tight curve at point → letter hypothesis at that beat
+     - Direction change (zig-zag) → key at each corner/point
+     - Large wide-angled gentle arc → gap BETWEEN keys (no letter); not a miss
+     - Tight loop with multiple tight curls → multiple letters in that region
+  4. Build prefix / key sequence from beats (not from glide LM guess)
+  5. Narrow candidate words:
+     - Trie prefix walk on TAP dictionaries only (BinaryDictionary isInDictionary / prefix)
+     - Boost / bias from user correction weights (46_) and path signatures (step 10)
+  6. Score survivors with 44_ letter weights (first strict, middle loose, last moderate)
+  7. On lift: commit top match; runner-ups in strip for user correction training
+
+LEARNING LOOP (ongoing, no corpus typos)
+  Each swipe session + correction updates:
+    - letter_confusion, word_correction (step 12)
+    - path_bucket + alignment when SWIPE commits exist (step 10)
+  Geometry decode gets better per user over sessions; NOT from crowd typo stats.
+
+GEOMETRY RULES SUMMARY
+  | Stroke feature              | Interpretation              |
+  |-----------------------------|-----------------------------|
+  | Sharp angle / tight curve   | Letter at/near that point   |
+  | Zig-zag corners             | Letter at each corner       |
+  | Wide gentle arc             | Between keys (skip letter)  |
+  | Tight multi-curl loop       | Multiple letters in loop    |
+  | Start key region            | First letter (hard anchor)  |
+  | End region                  | Soft anchor (44_)           |
+
+GAP — beta 0.0.0.23 interim (what exists today)
+  ✓ Tap/swipe distance gate (13a)
+  ✓ Beat detection skeleton (13b)
+  ✓ keyAt inference (13c)
+  ✓ Letter-weight scoring (13d)
+  ✗ Still calls legacy glide getSuggestionResults then filters — WRONG per this spec
+  ✗ No mutual exclusion with external swipe lib
+  ✗ No standalone trie-only candidate generation
+  ✗ Wide-arc vs tight-curve discrimination not implemented
+  ✗ Loop / multi-letter region detection not implemented
+
+PIVOT PLAN (next implementation chunks)
+  14a  HeatmapSwipeModePolicy_v1 — literal ON disables glide; ext swipe lib disables literal
+  14b  HeatmapSwipeCandidateSource_v1 — words from TAP dicts + correction table only
+  14c  HeatmapSwipeGeometryClassifier_v1 — wide arc vs tight corner vs loop (multi-letter)
+  14d  HeatmapSwipePrefixWalk_v1 — trie prefix narrow without gesture JNI session
+  15   Replace Suggest batch path: if literal ON → full decode, skip getSuggestionResults glide
+  17   Replay harness
+
+VERIFY (target)
+  1. Literal ON + no user swipe lib → swipe "compass" messy path → dict word, log shows beats
+  2. User swipe lib loaded → literal toggle forced off or blocked with message
+  3. Literal ON → logcat must NOT show glide GestureSuggest / batch proximity path
+  4. Candidate never contains word requiring letters user never crossed (start anchor)

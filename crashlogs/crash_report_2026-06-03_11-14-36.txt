@@ -1,0 +1,170 @@
+
+Thread: main
+App version: 3.9
+Device: samsung a54x, Android 13
+Locale: en_US
+Stack trace:
+java.lang.IllegalArgumentException: Failed to find configured root that contains /data/user_de/0/helium314.keyboard.debug/files/heatmap_learning/session_export_latest.json
+	at androidx.core.content.FileProvider$SimplePathStrategy.getUriForFile(FileProvider.java:915)
+	at androidx.core.content.FileProvider.getUriForFile(FileProvider.java:418)
+	at helium314.keyboard.heatmap.learning.HeatmapExportShare_v1.shareLatest(HeatmapExportShare_v1.kt:29)
+	at helium314.keyboard.heatmap.learning.HeatmapWordSlotSession_v4.shareSessionExport(HeatmapWordSlotSession_v4.kt:435)
+	at helium314.keyboard.settings.screens.HeatmapSmartKeyboardScreenKt.createHeatmapSmartKeyboardSettings$lambda$1$4$0(HeatmapSmartKeyboardScreen.kt:140)
+	at helium314.keyboard.settings.screens.HeatmapSmartKeyboardScreenKt.$r8$lambda$Yf41IuWvYg215ZRGEymEMW2Oagw(Unknown Source:0)
+	at helium314.keyboard.settings.screens.HeatmapSmartKeyboardScreenKt$$ExternalSyntheticLambda9.invoke(D8$$SyntheticClass:0)
+	at helium314.keyboard.settings.preferences.PreferenceKt.Preference$lambda$0$0(Preference.kt:65)
+	at helium314.keyboard.settings.preferences.PreferenceKt.$r8$lambda$szDPcTFlQVwZOGRo2EbrR5vg4-Y(Unknown Source:0)
+	at helium314.keyboard.settings.preferences.PreferenceKt$$ExternalSyntheticLambda2.invoke(D8$$SyntheticClass:0)
+	at androidx.compose.foundation.ClickableNode.onPointerEvent-H0pRuoY(Clickable.kt:1009)
+	at androidx.compose.ui.input.pointer.Node.dispatchMainEventPass(HitPathTracker.kt:436)
+	at androidx.compose.ui.input.pointer.Node.dispatchMainEventPass(HitPathTracker.kt:422)
+	at androidx.compose.ui.input.pointer.Node.dispatchMainEventPass(HitPathTracker.kt:422)
+	at androidx.compose.ui.input.pointer.Node.dispatchMainEventPass(HitPathTracker.kt:422)
+	at androidx.compose.ui.input.pointer.Node.dispatchMainEventPass(HitPathTracker.kt:422)
+	at androidx.compose.ui.input.pointer.NodeParent.dispatchMainEventPass(HitPathTracker.kt:275)
+	at androidx.compose.ui.input.pointer.HitPathTracker.dispatchChanges(HitPathTracker.kt:171)
+	at androidx.compose.ui.input.pointer.PointerInputEventProcessor.process-BIzXfog(PointerInputEventProcessor.kt:118)
+	at androidx.compose.ui.platform.AndroidComposeView.sendMotionEvent-8iAsVTc(AndroidComposeView.android.kt:2428)
+	at androidx.compose.ui.platform.AndroidComposeView.handleMotionEvent-8iAsVTc(AndroidComposeView.android.kt:2378)
+	at androidx.compose.ui.platform.AndroidComposeView.dispatchTouchEvent(AndroidComposeView.android.kt:2249)
+	at android.view.ViewGroup.dispatchTransformedTouchEvent(ViewGroup.java:3316)
+	at android.view.ViewGroup.dispatchTouchEvent(ViewGroup.java:2990)
+	at android.view.ViewGroup.dispatchTransformedTouchEvent(ViewGroup.java:3316)
+	at android.view.ViewGroup.dispatchTouchEvent(ViewGroup.java:2990)
+	at android.view.ViewGroup.dispatchTransformedTouchEvent(ViewGroup.java:3316)
+	at android.view.ViewGroup.dispatchTouchEvent(ViewGroup.java:2990)
+	at android.view.ViewGroup.dispatchTransformedTouchEvent(ViewGroup.java:3316)
+	at android.view.ViewGroup.dispatchTouchEvent(ViewGroup.java:2990)
+	at com.android.internal.policy.DecorView.superDispatchTouchEvent(DecorView.java:1116)
+	at com.android.internal.policy.PhoneWindow.superDispatchTouchEvent(PhoneWindow.java:1971)
+	at android.app.Activity.dispatchTouchEvent(Activity.java:4388)
+	at com.android.internal.policy.DecorView.dispatchTouchEvent(DecorView.java:1074)
+	at android.view.View.dispatchPointerEvent(View.java:15803)
+	at android.view.ViewRootImpl$ViewPostImeInputStage.processPointerEvent(ViewRootImpl.java:8153)
+	at android.view.ViewRootImpl$ViewPostImeInputStage.onProcess(ViewRootImpl.java:7877)
+	at android.view.ViewRootImpl$InputStage.deliver(ViewRootImpl.java:7213)
+	at android.view.ViewRootImpl$InputStage.onDeliverToNext(ViewRootImpl.java:7270)
+	at android.view.ViewRootImpl$InputStage.forward(ViewRootImpl.java:7236)
+	at android.view.ViewRootImpl$AsyncInputStage.forward(ViewRootImpl.java:7434)
+	at android.view.ViewRootImpl$InputStage.apply(ViewRootImpl.java:7244)
+	at android.view.ViewRootImpl$AsyncInputStage.apply(ViewRootImpl.java:7491)
+	at android.view.ViewRootImpl$InputStage.deliver(ViewRootImpl.java:7217)
+	at android.view.ViewRootImpl$InputStage.onDeliverToNext(ViewRootImpl.java:7270)
+	at android.view.ViewRootImpl$InputStage.forward(ViewRootImpl.java:7236)
+	at android.view.ViewRootImpl$InputStage.apply(ViewRootImpl.java:7244)
+	at android.view.ViewRootImpl$InputStage.deliver(ViewRootImpl.java:7217)
+	at android.view.ViewRootImpl.deliverInputEvent(ViewRootImpl.java:10788)
+	at android.view.ViewRootImpl.doProcessInputEvents(ViewRootImpl.java:10676)
+	at android.view.ViewRootImpl.enqueueInputEvent(ViewRootImpl.java:10632)
+	at android.view.ViewRootImpl$WindowInputEventReceiver.onInputEvent(ViewRootImpl.java:10926)
+	at android.view.InputEventReceiver.dispatchInputEvent(InputEventReceiver.java:285)
+	at android.os.MessageQueue.nativePollOnce(Native Method)
+	at android.os.MessageQueue.next(MessageQueue.java:335)
+	at android.os.Looper.loopOnce(Looper.java:186)
+	at android.os.Looper.loop(Looper.java:313)
+	at android.app.ActivityThread.main(ActivityThread.java:8762)
+	at java.lang.reflect.Method.invoke(Native Method)
+	at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:604)
+	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:1067)
+
+Last log:
+2026-06-03 11:14:16.379754 D Keyboard.Builder: setting size and position for N, 78: x 702, w 108
+2026-06-03 11:14:16.379788 D Keyboard.Builder: setting size and position for M, 77: x 810, w 108
+2026-06-03 11:14:16.379822 D Keyboard.Builder: setting size and position for delete_key, -7: x 918, w 162
+2026-06-03 11:14:16.379859 D Keyboard.Builder: setting size and position for ?123, -10001: x 0, w 162
+2026-06-03 11:14:16.379895 D Keyboard.Builder: setting size and position for ,, 44: x 162, w 108
+2026-06-03 11:14:16.379927 D Keyboard.Builder: setting size and position for space_key, 32: x 270, w 540
+2026-06-03 11:14:16.379959 D Keyboard.Builder: setting size and position for ., 46: x 810, w 108
+2026-06-03 11:14:16.379991 D Keyboard.Builder: setting size and position for done_key, 10: x 918, w 162
+2026-06-03 11:14:16.513659 D InputLogic: performUpdateSuggestionStripSync()
+2026-06-03 11:14:16.520532 D InputLogic: performUpdateSuggestionStripSync() : 7 ms to finish
+2026-06-03 11:14:16.530418 D KeyboardState: setShiftLocked: shiftLocked=true [keyboard=MANUAL_SHIFTED shift=RELEASING symbol=RELEASING switch=ALPHA]
+2026-06-03 11:14:16.532686 D KeyboardParser: adding key q, 0
+2026-06-03 11:14:16.533265 D KeyboardParser: adding key w, 0
+2026-06-03 11:14:16.533698 D KeyboardParser: adding key e, 0
+2026-06-03 11:14:16.534360 D KeyboardParser: adding key r, 0
+2026-06-03 11:14:16.534744 D KeyboardParser: adding key t, 0
+2026-06-03 11:14:16.535237 D KeyboardParser: adding key y, 0
+2026-06-03 11:14:16.535493 D KeyboardParser: adding key u, 0
+2026-06-03 11:14:16.535898 D KeyboardParser: adding key i, 0
+2026-06-03 11:14:16.536285 D KeyboardParser: adding key o, 0
+2026-06-03 11:14:16.536728 D KeyboardParser: adding key p, 0
+2026-06-03 11:14:16.536993 D KeyboardParser: adding key a, 0
+2026-06-03 11:14:16.537418 D KeyboardParser: adding key s, 0
+2026-06-03 11:14:16.537647 D KeyboardParser: adding key d, 0
+2026-06-03 11:14:16.537855 D KeyboardParser: adding key f, 0
+2026-06-03 11:14:16.538047 D KeyboardParser: adding key g, 0
+2026-06-03 11:14:16.538244 D KeyboardParser: adding key h, 0
+2026-06-03 11:14:16.538435 D KeyboardParser: adding key j, 0
+2026-06-03 11:14:16.538640 D KeyboardParser: adding key k, 0
+2026-06-03 11:14:16.538836 D KeyboardParser: adding key l, 0
+2026-06-03 11:14:16.539517 D KeyboardParser: adding key z, 0
+2026-06-03 11:14:16.539711 D KeyboardParser: adding key x, 0
+2026-06-03 11:14:16.539866 D KeyboardParser: adding key c, 0
+2026-06-03 11:14:16.540044 D KeyboardParser: adding key v, 0
+2026-06-03 11:14:16.540290 D KeyboardParser: adding key b, 0
+2026-06-03 11:14:16.540470 D KeyboardParser: adding key n, 0
+2026-06-03 11:14:16.540657 D KeyboardParser: adding key m, 0
+2026-06-03 11:14:16.541937 D Keyboard.Builder: setting size and position for Q, 81: x 0, w 108
+2026-06-03 11:14:16.542 D Keyboard.Builder: setting size and position for W, 87: x 108, w 108
+2026-06-03 11:14:16.542036 D Keyboard.Builder: setting size and position for E, 69: x 216, w 108
+2026-06-03 11:14:16.542067 D Keyboard.Builder: setting size and position for R, 82: x 324, w 108
+2026-06-03 11:14:16.542104 D Keyboard.Builder: setting size and position for T, 84: x 432, w 108
+2026-06-03 11:14:16.542137 D Keyboard.Builder: setting size and position for Y, 89: x 540, w 108
+2026-06-03 11:14:16.542166 D Keyboard.Builder: setting size and position for U, 85: x 648, w 108
+2026-06-03 11:14:16.542196 D Keyboard.Builder: setting size and position for I, 73: x 756, w 108
+2026-06-03 11:14:16.542225 D Keyboard.Builder: setting size and position for O, 79: x 864, w 108
+2026-06-03 11:14:16.542251 D Keyboard.Builder: setting size and position for P, 80: x 972, w 108
+2026-06-03 11:14:16.542289 D Keyboard.Builder: setting size and position for null, -10008: x 0, w 53
+2026-06-03 11:14:16.542372 D Keyboard.Builder: setting size and position for A, 65: x 53, w 108
+2026-06-03 11:14:16.542405 D Keyboard.Builder: setting size and position for S, 83: x 161, w 108
+2026-06-03 11:14:16.542437 D Keyboard.Builder: setting size and position for D, 68: x 269, w 108
+2026-06-03 11:14:16.542465 D Keyboard.Builder: setting size and position for F, 70: x 377, w 108
+2026-06-03 11:14:16.542492 D Keyboard.Builder: setting size and position for G, 71: x 485, w 108
+2026-06-03 11:14:16.542516 D Keyboard.Builder: setting size and position for H, 72: x 593, w 108
+2026-06-03 11:14:16.542543 D Keyboard.Builder: setting size and position for J, 74: x 701, w 108
+2026-06-03 11:14:16.542609 D Keyboard.Builder: setting size and position for K, 75: x 809, w 108
+2026-06-03 11:14:16.542642 D Keyboard.Builder: setting size and position for L, 76: x 917, w 108
+2026-06-03 11:14:16.542673 D Keyboard.Builder: setting size and position for null, -10008: x 1026, w 53
+2026-06-03 11:14:16.542703 D Keyboard.Builder: setting size and position for shift_key_locked, -11: x 0, w 162
+2026-06-03 11:14:16.542728 D Keyboard.Builder: setting size and position for Z, 90: x 162, w 108
+2026-06-03 11:14:16.542762 D Keyboard.Builder: setting size and position for X, 88: x 270, w 108
+2026-06-03 11:14:16.542791 D Keyboard.Builder: setting size and position for C, 67: x 378, w 108
+2026-06-03 11:14:16.542819 D Keyboard.Builder: setting size and position for V, 86: x 486, w 108
+2026-06-03 11:14:16.542847 D Keyboard.Builder: setting size and position for B, 66: x 594, w 108
+2026-06-03 11:14:16.542917 D Keyboard.Builder: setting size and position for N, 78: x 702, w 108
+2026-06-03 11:14:16.542948 D Keyboard.Builder: setting size and position for M, 77: x 810, w 108
+2026-06-03 11:14:16.542977 D Keyboard.Builder: setting size and position for delete_key, -7: x 918, w 162
+2026-06-03 11:14:16.543009 D Keyboard.Builder: setting size and position for ?123, -10001: x 0, w 162
+2026-06-03 11:14:16.543035 D Keyboard.Builder: setting size and position for ,, 44: x 162, w 108
+2026-06-03 11:14:16.543062 D Keyboard.Builder: setting size and position for space_key, 32: x 270, w 540
+2026-06-03 11:14:16.543094 D Keyboard.Builder: setting size and position for ., 46: x 810, w 108
+2026-06-03 11:14:16.543121 D Keyboard.Builder: setting size and position for done_key, 10: x 918, w 162
+2026-06-03 11:14:16.678651 D InputLogic: performUpdateSuggestionStripSync()
+2026-06-03 11:14:16.682760 D InputLogic: performUpdateSuggestionStripSync() : 4 ms to finish
+2026-06-03 11:14:17.136723 D HeatmapWordSlot: composing started WordSlot#1
+2026-06-03 11:14:17.137024 D RichInputConnection: setting composing text of length 8
+2026-06-03 11:14:17.145715 I LatinIME: onUpdateSelection: oss=13, ose=13, nss=14, nse=14, cs=6, ce=14
+2026-06-03 11:14:17.238165 D InputLogic: performUpdateSuggestionStripSync()
+2026-06-03 11:14:17.251141 D InputLogic: performUpdateSuggestionStripSync() : 13 ms to finish
+2026-06-03 11:14:17.369687 D HeatmapWordSlot: composing started WordSlot#1
+2026-06-03 11:14:17.369936 D RichInputConnection: setting composing text of length 9
+2026-06-03 11:14:17.378813 I LatinIME: onUpdateSelection: oss=14, ose=14, nss=15, nse=15, cs=6, ce=15
+2026-06-03 11:14:17.471204 D InputLogic: performUpdateSuggestionStripSync()
+2026-06-03 11:14:17.478413 D InputLogic: performUpdateSuggestionStripSync() : 8 ms to finish
+2026-06-03 11:14:18.564196 I LatinIME: hideWindow
+2026-06-03 11:14:18.564970 I LatinIME: onFinishInputView
+2026-06-03 11:14:18.567936 I Settings: loadSettings
+2026-06-03 11:14:18.571800 I Settings: loadSettings
+2026-06-03 11:14:18.575476 I Settings: loadSettings
+2026-06-03 11:14:18.579598 I HeatmapInstr: fieldDiff stub unchanged fp=-851907525 pendingFinalText=0
+2026-06-03 11:14:18.582838 I Settings: loadSettings
+2026-06-03 11:14:18.585856 I Settings: loadSettings
+2026-06-03 11:14:18.591669 I Settings: loadSettings
+2026-06-03 11:14:18.596241 I Settings: loadSettings
+2026-06-03 11:14:18.599053 I HeatmapInstr: flush FIELD_BLUR host=com.google.android.documentsui gen=1 journalWords=0 sessions=0
+2026-06-03 11:14:18.607977 I Settings: loadSettings
+2026-06-03 11:14:18.610926 I Settings: loadSettings
+2026-06-03 11:14:18.614649 I HeatmapInstr: export latest /data/user_de/0/helium314.keyboard.debug/files/heatmap_learning/session_export_latest.json bytes=1107
+2026-06-03 11:14:18.615224 I LatinIME: onWindowHidden
+2026-06-03 11:14:18.619321 I LatinIME: onFinishInput

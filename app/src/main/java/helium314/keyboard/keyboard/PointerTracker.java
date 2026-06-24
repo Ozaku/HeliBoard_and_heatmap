@@ -34,6 +34,7 @@ import helium314.keyboard.latin.common.Constants;
 import helium314.keyboard.latin.common.CoordinateUtils;
 import helium314.keyboard.latin.common.InputPointers;
 import helium314.keyboard.latin.define.DebugFlags;
+import helium314.keyboard.heatmap.swipe.HeatmapSwipePointerPolicy_v1;
 import helium314.keyboard.latin.settings.Settings;
 import helium314.keyboard.latin.settings.SettingsValues;
 import helium314.keyboard.latin.utils.KtxKt;
@@ -133,6 +134,8 @@ public final class PointerTracker implements PointerTrackerQueue.Element,
 
     // The current key where this pointer is.
     private Key mCurrentKey = null;
+    // ai-note: Block 3 step 13a — letter key at stroke down for tap/swipe axis gate
+    private Key mGestureStartKey = null;
     // The position where the current key was recognized for the first time.
     private int mKeyX;
     private int mKeyY;
@@ -715,6 +718,7 @@ public final class PointerTracker implements PointerTrackerQueue.Element,
         mKeyboardLayoutHasBeenChanged = false;
         mIsTrackingForActionDisabled = false;
         resetKeySelectionByDraggingFinger();
+        mGestureStartKey = (key != null && Character.isLetter(key.getCode())) ? key : null;
         if (key != null) {
             // This onPress call may have changed keyboard layout. Those cases are detected at
             // {@link #setKeyboard}. In those cases, we should update key according to the new
@@ -781,13 +785,18 @@ public final class PointerTracker implements PointerTrackerQueue.Element,
         if (isShowingPopupKeysPanel()) {
             return;
         }
-        if (!sInGesture && key != null && Character.isLetter(key.getCode())
-                && mBatchInputArbiter.mayStartBatchInput(this)) {
+        final boolean heatmapRelaxedStart = HeatmapSwipePointerPolicy_v1.useRelaxedBatchStart();
+        if (!sInGesture && mGestureStartKey != null
+                && mBatchInputArbiter.mayStartBatchInput(
+                        mGestureStartKey, mKeyboard.mMostCommonKeyWidth,
+                        mKeyboard.mMostCommonKeyHeight, heatmapRelaxedStart, this)) {
             sListener.resetMetaState(); // avoid metaState getting stuck, doesn't work with gesture typing anyway
             sInGesture = true;
+            HeatmapSwipePointerPolicy_v1.logBatchArmed(
+                    "move", mGestureStartKey.getLabel());
         }
         if (sInGesture) {
-            if (key != null) {
+            if (heatmapRelaxedStart || key != null) {
                 mBatchInputArbiter.updateBatchInput(eventTime, this);
             }
             showGestureTrail();
@@ -1002,6 +1011,11 @@ public final class PointerTracker implements PointerTrackerQueue.Element,
                 setReleasedKeyGraphics(oldKey, true);
                 return;
             }
+            if (HeatmapSwipePointerPolicy_v1.shouldSuppressMidStrokeTapKeys(
+                    mStartX, mStartY, x, y, mIsDetectingGesture, sInGesture,
+                    mGestureStartKey, mKeyboard)) {
+                return;
+            }
         }
 
         if (newKey != null) {
@@ -1058,6 +1072,7 @@ public final class PointerTracker implements PointerTrackerQueue.Element,
         final boolean isInDraggingFinger = mIsInDraggingFinger;
         final boolean isInSlidingKeyInput = mIsInSlidingKeyInput;
         resetKeySelectionByDraggingFinger();
+        final boolean wasDetectingGesture = mIsDetectingGesture;
         mIsDetectingGesture = false;
         final Key currentKey = mCurrentKey;
         mCurrentKey = null;
@@ -1066,7 +1081,7 @@ public final class PointerTracker implements PointerTrackerQueue.Element,
         // Release the last pressed key.
         setReleasedKeyGraphics(currentKey, true);
 
-        if (mInHorizontalSwipe && currentKey.getCode() == KeyCode.DELETE) {
+        if (mInHorizontalSwipe && currentKey != null && currentKey.getCode() == KeyCode.DELETE) {
             sListener.onUpWithDeletePointerActive();
         }
 
@@ -1100,6 +1115,21 @@ public final class PointerTracker implements PointerTrackerQueue.Element,
                 mInVerticalSwipe = false;
                 sListener.onEndSpaceSwipe();
                 return;
+            }
+        }
+
+        // ai-note: arm batch on lift only — mayEndBatchInput below runs tail decode (no updateBatchInput here)
+        if (!sInGesture && wasDetectingGesture && mKeyboard != null
+                && HeatmapSwipePointerPolicy_v1.isHeatmapSwipeActive()
+                && mGestureStartKey != null
+                && HeatmapSwipePointerPolicy_v1.strokeQualifiesAsSwipe(
+                        mStartX, mStartY, x, y, mGestureStartKey, mKeyboard)) {
+            if (mBatchInputArbiter.mayStartBatchInput(
+                    mGestureStartKey, mKeyboard.mMostCommonKeyWidth,
+                    mKeyboard.mMostCommonKeyHeight, true, this)) {
+                sInGesture = true;
+                HeatmapSwipePointerPolicy_v1.logBatchArmed(
+                        "lift", mGestureStartKey.getLabel());
             }
         }
 

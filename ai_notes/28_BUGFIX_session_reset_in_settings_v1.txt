@@ -1,0 +1,37 @@
+================================================================================
+BUG: Instrumentation showed 0 after typing (beta 0.0.0.2)
+================================================================================
+
+SYMPTOM
+  User typed in Gemini; Heatmap Smart Keyboard status showed all zeros.
+
+NOT CAUSED BY
+  - Missing swipe engine. Tap commits use same hooks (commitChosenWord, composing start).
+  - Learning toggle off (user had it on).
+
+ROOT CAUSE
+  LatinIME resetSession() ran on every isDifferentTextField, including when focus moved
+  to our own settings app (heatmap_smart_keyboard search / fields). Opening settings
+  after typing wiped in-memory journal and counters before user viewed status.
+
+FIX (beta 0.0.0.3)
+  - Reset session only when host editor package != our package (helium314.keyboard.debug).
+  - Persist snapshot to SharedPreferences on each word commit.
+  - Status screen shows live session + "Last saved snapshot" after commits.
+
+RETEST
+  1. installDebugNoMinify
+  2. Use Heatmap KB (beta) in external app, type several words with space
+  3. Open Heatmap KB Settings → Heatmap Smart Keyboard → tap Instrumentation status
+  4. Expect snapshot section with words > 0 even if live session is 0
+
+UPDATE beta 0.0.0.4
+  - Live section is EXPECTED zero when settings app has focus (keyboard hidden).
+  - Status now shows IME heartbeat: must see helium314.keyboard.debug — if "IME not seen"
+    user is typing with store HeliBoard, not Heatmap KB (beta).
+  - logcat tag HeatmapInstr logs every commit (no Debug mode required).
+  - Prefs total commit counter survives opening settings.
+
+================================================================================
+END
+================================================================================

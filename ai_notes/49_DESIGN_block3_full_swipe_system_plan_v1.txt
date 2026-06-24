@@ -1,0 +1,375 @@
+================================================================================
+BLOCK 3 — FULL SWIPE SYSTEM DESIGN PLAN (ground-up)
+Maintainer session 2026-06 | Planning doc — implement after approval
+Supersedes confusion in 48_ wording: user WANTS swipe typing; rejects EXTERNAL
+swipe-library decode. Cross-ref: 44_, 46_, 48_, 20_v3, 19_, 25_ roadmap
+================================================================================
+
+--------------------------------------------------------------------------------
+0. TERMINOLOGY (read this first)
+--------------------------------------------------------------------------------
+  SWIPE / GLIDE TYPING (user wants this)
+    Finger drags across keys → one word committed on lift. This project builds
+    that feature.
+
+  HEATMAP LITERAL SWIPE ENGINE (this project)
+    Our geometry-first decoder + dictionary narrowing + personal learning.
+    This IS the swipe system we are building.
+
+  HELIBOARD BUNDLED DICTIONARY (use this)
+    Binary .dict trie already shipped / loaded for typing (BinaryDictionary JNI).
+    Prefix lookup, isInDictionary, word frequency — TAP session only.
+
+  TAP-INSTALLED DICTIONARIES (use this)
+    Personal, contacts, user-imported .dict files that HeliBoard already uses for
+    tap autocomplete. Same trie APIs; no gesture session.
+
+  EXTERNAL SWIPE LIBRARY (do NOT use — mutual exclusion)
+    User-imported libjni_latinime.so, Google gesture stack, GestureSuggestPolicy,
+    proximity gesture grids, getSuggestionResults(SESSION_ID_GESTURE), or any
+    decode path that pulls candidate words from gesture proximity neighbors.
+    Our engine must never call these when Heatmap swipe is active.
+
+  Clarification on beta 0.0.0.23 interim
+    Current code still asks legacy glide for candidates then filters. That was a
+    stepping stone only. Target architecture below replaces glide entirely.
+
+--------------------------------------------------------------------------------
+1. GOALS
+--------------------------------------------------------------------------------
+  G1  Swipe typing that feels instant on lift (p95 decode < 16ms on mid device)
+  G2  Words only from dictionary + user correction data (no hallucinated words)
+  G3  Keys far from stroke → ~0% probability; near-miss adjacent keys allowed
+  G4  First letter anchors narrowing; beats/corners drive next letters
+  G5  Personal accuracy improves over time from corrections (steps 10–12, Block 4)
+  G6  No interference with external swipe libraries (strict mode switch)
+  G7  No visual lag on swipe trail / key preview (decode off UI thread)
+  G8  Layout-aware: works on any alphabet keyboard HeliBoard already shows
+
+--------------------------------------------------------------------------------
+2. NON-GOALS (v1 of this engine)
+--------------------------------------------------------------------------------
+  N1  Using external swipe library suggestions or gesture training data
+  N2  Global corpus typo statistics / "everyone types it" LM overrides
+  N3  Emoji / symbol swipe lexicon
+  N4  Key geometry resize (Block 8) — decode first, geometry training later
+  N5  Perfect loop disambiguation day one — improves with learning
+  N6  Non-alphabet layouts (symbols-only, phone pad) — skip swipe decode
+
+--------------------------------------------------------------------------------
+3. MODE POLICY (mutual exclusion)
+--------------------------------------------------------------------------------
+  Three states (user-visible):
+
+  | State | Touch drag | Word decode source |
+  |-------|------------|-------------------|
+  | A. Heatmap swipe ON | Gesture trail + our engine | Trie + corrections |
+  | B. External swipe lib ON | Legacy glide | Proximity gesture (HeliBoard default) |
+  | C. Neither | Tap only | N/A |
+
+  Rules:
+    - Enabling Heatmap swipe → disable external swipe lib decode (prefs + runtime)
+      GestureEnabler may still draw trail; batch suggest path routes to OUR engine.
+    - User loads external swipe lib → Heatmap swipe toggle forced OFF + toast
+    - User cannot enable both; settings show why
+    - Tap path always unchanged in all states
+
+  Settings location: Heatmap Smart Keyboard
+    "Heatmap swipe typing" master toggle (replaces vague "literal engine" label)
+    Subtext: Uses dictionary + your corrections, not installed swipe libraries
+
+--------------------------------------------------------------------------------
+4. MULTILINGUAL & LAYOUT (QWERTY first, not QWERTY-only)
+--------------------------------------------------------------------------------
+  Principle: decode is keyed on LIVE keyboard geometry + locale, not hardcoded EN.
+
+  At stroke start, capture (already built step 9):
+    - localeTag (e.g. en-US, ru-RU)
+    - layoutHash lh_* from HeatmapCoordinateMap_v1.fromKeyboard()
+    - letter key bounds list (any single-letter keys on current keyboard)
+
+  Russian example:
+    User installs Russian layout + Russian .dict
+    → Keyboard shows Cyrillic letter keys with bounds
+    → layoutHash includes key positions
+    → DictionaryFacilitator mainLocale = ru
+    → Prefix walk uses Russian trie
+    → pathLetters are Cyrillic labels from keyAt(x,y)
+    → Works without separate "Russian mode" code if layout is alphabet element
+
+  Limits v1:
+    - Requires isLetterLayoutElement (alphabet keyboards) — already in step 9
+    - Script without per-key letters (IME composition) → swipe off for that layout
+    - RTL: coordinates unchanged; trie + labels still work
+    - Dvorak / AZERTY / Russian JCUKEN: automatic via layout hash, not QWERTY string
+
+  QWERTY-first testing: dev fixtures use en-US QWERTY; architecture is layout-agnostic.
+
+--------------------------------------------------------------------------------
+5. END-TO-END PIPELINE
+--------------------------------------------------------------------------------
+
+  ┌─────────────┐    ┌──────────────────┐    ┌─────────────────────┐
+  │ Touch events│───▶│ Stroke buffer    │───▶│ Incremental decode  │
+  │ (UI thread) │    │ InputPointers    │    │ (background thread) │
+  └─────────────┘    └────────┬─────────┘    └──────────┬──────────┘
+                              │                         │
+                              │ swipe trail draw        │ throttled 30–50ms
+                              │ (unchanged, UI only)    ▼
+                              │              ┌─────────────────────┐
+                              │              │ Geometry + key likelihood
+                              │              │ Prefix trie narrow  │
+                              │              │ + correction bias   │
+                              │              └──────────┬──────────┘
+                              │                         │
+  Lift ───────────────────────┴─────────────────────────┘
+                              ▼
+                    ┌─────────────────────┐
+                    │ Final rank + commit │
+                    │ Runner-ups → strip  │
+                    │ WordSession SWIPE   │
+                    └─────────────────────┘
+
+  UI thread responsibilities ONLY:
+    - PointerTracker / trail / key highlight (existing)
+    - Tap/swipe gate (13a) before batch mode arms
+    - Post lift: apply committed word (existing InputLogic path)
+
+  Background (InputLogicHandler or dedicated HeatmapSwipeDecodeWorker):
+    - Resample polyline, classify segments, update prefix state
+    - Never block Choreographer / trail rendering
+
+--------------------------------------------------------------------------------
+6. PHASE A — STROKE GATING & CAPTURE (mostly done)
+--------------------------------------------------------------------------------
+  A1  Min axis displacement vs start-key size (13a) — DONE
+  A2  Dwell optional v1.1 — 50ms on start key before arming gesture
+  A3  Store full InputPointers + layout snapshot per active stroke
+  A4  inputMode SWIPE only when batch armed through our gate
+
+--------------------------------------------------------------------------------
+7. PHASE B — GEOMETRY CLASSIFIER
+--------------------------------------------------------------------------------
+  Input: resampled polyline (16–32 points), keyboard bounds
+
+  B1  Segment splitter
+      - Detect corner points: angle change > CORNER_DEG (≈35–45°)
+      - Zig-zag: each corner → one beat slot
+
+  B2  Wide arc detector (NO letter)
+      - Gentle bend over long span: max angle change per pixel below ARC_THRESH
+      - Span crosses gap between keys without keyAt hit → mark "bridge" not letter
+
+  B3  Tight loop detector (MULTIPLE letters)
+      - Self-intersection or curl: path revisits same region with ≥2 tight corners
+      - Emit multiple letter slots inside loop bounding box (ordered by time)
+
+  B4  Beat count → expected letter slot count band [beats-1 .. beats+1]
+      Dictionary tie-break; do not force exact length on messy swipes
+
+  Output: List<GeometryEvent>
+    { type: CORNER|BRIDGE|LOOP|START|END, x, y, beatIndex }
+
+--------------------------------------------------------------------------------
+8. PHASE C — KEY LIKELIHOOD (replaces proximity blob)
+--------------------------------------------------------------------------------
+  For each geometry event point (x,y), score every letter key k:
+
+    dist = distance from (x,y) to key k hit box (0 if inside box)
+
+    likelihood(k) =
+      1.0                           if finger inside key box
+      falloff(dist / keyRadius)     if adjacent (same row or neighbor)
+      0.0                           if dist > DIST_ZERO_THRESH
+
+  DIST_ZERO_THRESH (starting tuning):
+    - > 1.0 × key width OR > 1.0 × key height away from nearest edge
+      → 0% (different row full key away = impossible)
+    - Barely grazing edge of neighbor: small non-zero (heatmap corrections can
+      boost later)
+
+  falloff: linear or exp from 1→0 between 0 and DIST_ZERO_THRESH
+
+  Per beat, take top-1 or top-2 keys by likelihood (not all neighbors).
+  Heatmap alignment offsets (step 10) shift effective key center per user.
+
+  This directly addresses: "bootlegger when never touched B" — B likelihood 0.
+
+--------------------------------------------------------------------------------
+9. PHASE D — LETTER HYPOTHESIS → PREFIX
+--------------------------------------------------------------------------------
+  D1  Beat 0: start key = max likelihood at stroke origin; HARD anchor
+  D2  Beats 1..N-1: pick letter per beat from likelihood + correction confusion
+  D3  End: soft match (44_ w_last); may overshoot last key
+  D4  Build ordered letter list pathLetters[] (allow duplicates for loops)
+  D5  activePrefix = join(pathLetters) with pruning when trie has no continuation
+
+  On trie dead-end:
+    - Try correction-biased alternate (46_ letter_confusion from→to)
+    - Drop lowest-confidence middle beat and retry (middle loosest per 44_)
+    - Never swap entire word for unrelated dictionary guess
+
+--------------------------------------------------------------------------------
+10. PHASE E — DICTIONARY NARROWING (tap sources only)
+--------------------------------------------------------------------------------
+  Candidate sources (union, deduped):
+    E1  Main BinaryDictionary for current locale (bundled)
+    E2  User history / personal dict (if enabled for tap)
+    E3  Contacts / apps dicts (if enabled — same as tap)
+    E4  Learned word_correction targets (46_) as soft boost, not new lexicon
+
+  API strategy:
+    - Use ComposedData(typedPrefix, isBatchMode=false) + SESSION_ID_TYPING
+      getSuggestionResults → completions for prefix (NOT SESSION_ID_GESTURE)
+    - OR native prefix iterator if exposed (profile which is faster)
+    - Cap active branches: MAX_BRANCHES = 200 (19_ perf doc)
+    - Prune after each beat: discard prefixes with zero geometry score
+
+  Scoring final candidates:
+    score = w_geo * geometryFit(word, path) + w_freq * dictScore + w_learn * personalBias
+    w_geo dominates; w_learn grows with correction density
+
+--------------------------------------------------------------------------------
+11. PHASE F — INCREMENTAL / REAL-TIME DECODE
+--------------------------------------------------------------------------------
+  During stroke (every 30–50ms or +3 new points):
+    - Re-run B→D on current polyline (cheap: 32 points max)
+    - Update activePrefix + top-K runnerUps (K=8)
+    - Store in HeatmapSwipeSessionState_v1 (in-memory, one stroke)
+
+  On lift:
+    - Final pass with complete polyline (< 5ms target incremental work already done)
+    - Commit word #1 to field; strip shows runnerUps
+    - HeatmapWordSlotSession SWIPE commit + path capture (step 10)
+
+  Floating preview (optional v1.1):
+    - Show top candidate in gesture preview if enabled
+    - Fed from runnerUps[0], updated incrementally
+
+  Hard rule: incremental decode NEVER mutates InputPointers or trail drawing state.
+
+--------------------------------------------------------------------------------
+12. PHASE G — LEARNING INTEGRATION
+--------------------------------------------------------------------------------
+  Full personal learning spec: 50_DESIGN_personal_swipe_learning_and_metrics_v1.txt
+
+  Hot path (during swipe):
+    - READ cached biases only — no weight updates on stroke thread
+    - RECORD events: path_bucket, alignment, SwipeCorrectionEvent, metrics
+
+  Cold path (keyboard closed / IME idle):
+    - HeatmapSwipeLearningBatch_v1: classify corrections (overshoot last letter,
+      neighbor T/Y, multi-beat telephone-style fixes) → update bias tables
+
+  Primary training signal:
+    - User tap-types replacement at SAME WordSlot after bad swipe output
+      (e.g. swipe "fired" → tap "fire" = learned overshoot)
+
+  Bias types (NOT resize-first):
+    - Letter likelihood ±, directional octant bias, path→word affinity,
+      end-overshoot policy strength (50_ section 3)
+
+  Invalid prefixes ("iy"): trie eliminates; bias only reorders valid words.
+
+  Accuracy metrics: correction_rate ↓, first_swipe_success ↑ (50_ section 8)
+
+  No training data from external swipe libraries ever imported.
+
+--------------------------------------------------------------------------------
+13. PERFORMANCE BUDGET
+--------------------------------------------------------------------------------
+  | Stage                    | Thread   | Budget (p95)   |
+  |--------------------------|----------|----------------|
+  | Trail render             | UI       | 16ms frame     |
+  | Point append             | UI       | < 0.5ms        |
+  | Incremental decode tick  | BG       | < 8ms          |
+  | Final lift decode        | BG       | < 12ms         |
+  | Commit to field          | UI       | existing path  |
+
+  Memory per active stroke: < 4KB (polyline + runnerUps + prefix state)
+
+  If prefix explosion > MAX_BRANCHES: aggressive geometry prune + log metric
+
+--------------------------------------------------------------------------------
+14. IMPLEMENTATION ROADMAP (maps to 25_ Block 3)
+--------------------------------------------------------------------------------
+  STEP 13 (rename/clarify) — Geometry foundation
+    13a  Tap/swipe gate                    [DONE]
+    13b  Beat + corner detection           [partial → extend B1–B4]
+    13c  keyAt + layout snapshot           [DONE]
+    13d  Key likelihood falloff (NEW C)     [replaces proximity filter]
+    13e  Geometry classifier wide/loop      [NEW B2–B3]
+
+  STEP 14 — Dictionary-only narrowing
+    14a  HeatmapSwipeModePolicy_v1         mutual exclusion
+    14b  HeatmapSwipeCandidateSource_v1    tap dicts union
+    14c  HeatmapSwipePrefixEngine_v1       incremental prefix walk
+    14d  Wire SESSION_ID_TYPING not GESTURE
+
+  STEP 15 — Commit path
+    15a  HeatmapSwipeSessionState_v1       incremental state
+    15b  Suggest.kt batch route → our engine when mode A
+    15c  Runner-up strip + WordSession SWIPE
+    15d  HeatmapSwipeSingleLetterBan in our path (41_)
+
+  STEP 16 — Settings UX
+    16a  Rename toggle "Heatmap swipe typing"
+    16b  Block enable when external swipe lib detected
+    16c  Status line: mode A/B/C + locale + layoutHash
+
+  STEP 17 — Replay harness
+    17   Recorded strokes + expected prefix/words (no embedded word list in code)
+
+  RETIRE interim: HeatmapLiteralSwipeDecode rerank-glide path
+
+--------------------------------------------------------------------------------
+15. TEST PLAN (before user daily-drives)
+--------------------------------------------------------------------------------
+  Unit:
+    - Key likelihood: far row → 0; edge neighbor → small positive
+    - Geometry: wide arc → bridge not letter; zigzag → N corners
+    - Prefix: "c" start → no "bootlegger" in survivors
+    - Mode policy: both toggles impossible
+
+  Device (gesture capture works, our decode ON, external lib OFF):
+    - en QWERTY: compass messy path, knowledge path, I tap not swipe
+    - ru layout + ru dict: swipe Russian word if user has that setup
+    - Lift latency: log metrics commit P95
+
+  Regression:
+    - Tap typing unchanged
+    - Trail smooth when BG decode running
+
+--------------------------------------------------------------------------------
+16. OPEN QUESTIONS (defaults proposed)
+--------------------------------------------------------------------------------
+  Q1  Use HeliBoard gesture trail drawing without glide decode?
+      DEFAULT YES — trail is visual only; decode is ours.
+
+  Q2  Show floating word preview during stroke?
+      DEFAULT follow existing gesture preview setting; feed from our runnerUps.
+
+  Q3  When Heatmap swipe ON but no .dict for locale?
+      DEFAULT fall back to tap-only + settings warning.
+
+  Q4  MAX_BRANCHES 200 enough for Russian?
+      DEFAULT yes; instrument and tune.
+
+--------------------------------------------------------------------------------
+17. USER APPROVAL CHECKLIST
+--------------------------------------------------------------------------------
+  [ ] Swipe = our engine, not external swipe lib decode
+  [ ] Dictionary + tap dicts + corrections only
+  [ ] Distance falloff (far keys = 0%)
+  [ ] Geometry rules: corners, wide arc, loops, zigzag
+  [ ] Multilingual via layout hash + locale (not EN-only code)
+  [ ] Incremental BG decode, no trail lag
+  [ ] Personal learning: tap-replace-swipe, overshoot/neighbor biases, cold apply
+  [ ] Accuracy metrics prove improvement (50_)
+  [ ] Implementation order 13e → 14 → 15 → 16 → 17 → Block 4 (50_)
+
+  After approval → implement 14a (mode policy) first, then retire glide rerank.
+
+================================================================================
+END PLAN v1
+================================================================================

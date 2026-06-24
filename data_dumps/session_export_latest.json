@@ -1,0 +1,292 @@
+{
+  "schemaVersion": 1,
+  "exportedAtMs": 1780504851780,
+  "exportSource": "ime_flush_MANUAL_DEBUG",
+  "build": {
+    "beta": "0.0.0.14",
+    "roadmapStep": 4,
+    "statusLine": "Heatmap learning beta 0.0.0.14 (roadmap step 4)"
+  },
+  "settings": {
+    "learningEnabled": true,
+    "paragraphWindowChars": 3000,
+    "tapHeatmapAutocorrect": false,
+    "swipeHeatmapAutocorrect": true,
+    "autoFileDump": false
+  },
+  "instrumentation": {
+    "lifetimeCommits": 250,
+    "lastFlushReason": "MANUAL_DEBUG",
+    "lastFlushHost": "com.google.android.apps.translate",
+    "totalFlushes": 130,
+    "selectionEditEvents": 88,
+    "pendingFinalTextSync": 13,
+    "lastFieldProbe": "skip=no_connection",
+    "snapshotBeta": "0.0.0.14",
+    "snapshotJournalChars": 79,
+    "snapshotJournalWords": 13,
+    "snapshotLastWord": "immediately",
+    "snapshotHostPackage": "com.google.android.apps.translate"
+  },
+  "wordSessions": [
+    {
+      "slotId": 1,
+      "sessionGeneration": 4,
+      "hostPackage": "com.google.android.apps.translate",
+      "inputMode": "TAP",
+      "commitType": "DECIDED",
+      "committedText": "corporations",
+      "finalText": "corporations",
+      "typedText": "corporations",
+      "separatorCharCount": 1,
+      "committedAtMs": 1780504786689,
+      "swipeTracePointCount": 0,
+      "tapKeyCount": 0
+    },
+    {
+      "slotId": 2,
+      "sessionGeneration": 4,
+      "hostPackage": "com.google.android.apps.translate",
+      "inputMode": "TAP",
+      "commitType": "DECIDED",
+      "committedText": "are",
+      "finalText": "are",
+      "typedText": "are",
+      "separatorCharCount": 1,
+      "committedAtMs": 1780504787978,
+      "swipeTracePointCount": 0,
+      "tapKeyCount": 0
+    },
+    {
+      "slotId": 3,
+      "sessionGeneration": 4,
+      "hostPackage": "com.google.android.apps.translate",
+      "inputMode": "TAP",
+      "commitType": "DECIDED",
+      "committedText": "bad",
+      "finalText": "bad",
+      "typedText": "baf",
+      "separatorCharCount": 1,
+      "committedAtMs": 1780504789178,
+      "swipeTracePointCount": 0,
+      "tapKeyCount": 0
+    },
+    {
+      "slotId": 4,
+      "sessionGeneration": 4,
+      "hostPackage": "com.google.android.apps.translate",
+      "inputMode": "TAP",
+      "commitType": "DECIDED",
+      "committedText": "and",
+      "finalText": "and",
+      "typedText": "and",
+      "separatorCharCount": 1,
+      "committedAtMs": 1780504791265,
+      "swipeTracePointCount": 0,
+      "tapKeyCount": 0
+    },
+    {
+      "slotId": 5,
+      "sessionGeneration": 4,
+      "hostPackage": "com.google.android.apps.translate",
+      "inputMode": "TAP",
+      "commitType": "DECIDED",
+      "committedText": "you",
+      "finalText": "you",
+      "typedText": "you",
+      "separatorCharCount": 1,
+      "committedAtMs": 1780504792289,
+      "swipeTracePointCount": 0,
+      "tapKeyCount": 0
+    },
+    {
+      "slotId": 6,
+      "sessionGeneration": 4,
+      "hostPackage": "com.google.android.apps.translate",
+      "inputMode": "TAP",
+      "commitType": "DECIDED",
+      "committedText": "should",
+      "finalText": "should",
+      "typedText": "should",
+      "separatorCharCount": 1,
+      "committedAtMs": 1780504794171,
+      "swipeTracePointCount": 0,
+      "tapKeyCount": 0
+    },
+    {
+      "slotId": 7,
+      "sessionGeneration": 4,
+      "hostPackage": "com.google.android.apps.translate",
+      "inputMode": "TAP",
+      "commitType": "DECIDED",
+      "committedText": "hifev",
+      "finalText": "hifev",
+      "typedText": "hifev",
+      "separatorCharCount": 1,
+      "committedAtMs": 1780504796477,
+      "swipeTracePointCount": 0,
+      "tapKeyCount": 0
+    },
+    {
+      "slotId": 8,
+      "sessionGeneration": 4,
+      "hostPackage": "com.google.android.apps.translate",
+      "inputMode": "TAP",
+      "commitType": "DECIDED",
+      "committedText": "hide",
+      "finalText": "hide",
+      "typedText": "hide",
+      "separatorCharCount": 1,
+      "committedAtMs": 1780504799118,
+      "swipeTracePointCount": 0,
+      "tapKeyCount": 0
+    },
+    {
+      "slotId": 9,
+      "sessionGeneration": 4,
+      "hostPackage": "com.google.android.apps.translate",
+      "inputMode": "TAP",
+      "commitType": "DECIDED",
+      "committedText": "your",
+      "finalText": "your",
+      "typedText": "your",
+      "separatorCharCount": 1,
+      "committedAtMs": 1780504800847,
+      "swipeTracePointCount": 0,
+      "tapKeyCount": 0
+    },
+    {
+      "slotId": 10,
+      "sessionGeneration": 4,
+      "hostPackage": "com.google.android.apps.translate",
+      "inputMode": "TAP",
+      "commitType": "DECIDED",
+      "committedText": "data",
+      "finalText": "data",
+      "typedText": "data",
+      "separatorCharCount": 1,
+      "committedAtMs": 1780504802185,
+      "swipeTracePointCount": 0,
+      "tapKeyCount": 0
+    },
+    {
+      "slotId": 11,
+      "sessionGeneration": 4,
+      "hostPackage": "com.google.android.apps.translate",
+      "inputMode": "TAP",
+      "commitType": "DECIDED",
+      "committedText": "from",
+      "finalText": "from",
+      "typedText": "from",
+      "separatorCharCount": 1,
+      "committedAtMs": 1780504803327,
+      "swipeTracePointCount": 0,
+      "tapKeyCount": 0
+    },
+    {
+      "slotId": 12,
+      "sessionGeneration": 4,
+      "hostPackage": "com.google.android.apps.translate",
+      "inputMode": "TAP",
+      "commitType": "DECIDED",
+      "committedText": "them",
+      "finalText": "them",
+      "typedText": "thrm",
+      "separatorCharCount": 1,
+      "committedAtMs": 1780504804461,
+      "swipeTracePointCount": 0,
+      "tapKeyCount": 0
+    },
+    {
+      "slotId": 13,
+      "sessionGeneration": 4,
+      "hostPackage": "com.google.android.apps.translate",
+      "inputMode": "TAP",
+      "commitType": "DECIDED",
+      "committedText": "immediately",
+      "finalText": "immediately",
+      "typedText": "immediately",
+      "separatorCharCount": 1,
+      "committedAtMs": 1780504813109,
+      "swipeTracePointCount": 0,
+      "tapKeyCount": 0
+    }
+  ],
+  "paragraphJournal": [
+    {
+      "slotId": 1,
+      "word": "corporations",
+      "charCount": 13
+    },
+    {
+      "slotId": 2,
+      "word": "are",
+      "charCount": 4
+    },
+    {
+      "slotId": 3,
+      "word": "bad",
+      "charCount": 4
+    },
+    {
+      "slotId": 4,
+      "word": "and",
+      "charCount": 4
+    },
+    {
+      "slotId": 5,
+      "word": "you",
+      "charCount": 4
+    },
+    {
+      "slotId": 6,
+      "word": "should",
+      "charCount": 7
+    },
+    {
+      "slotId": 7,
+      "word": "hifev",
+      "charCount": 6
+    },
+    {
+      "slotId": 8,
+      "word": "hide",
+      "charCount": 5
+    },
+    {
+      "slotId": 9,
+      "word": "your",
+      "charCount": 5
+    },
+    {
+      "slotId": 10,
+      "word": "data",
+      "charCount": 5
+    },
+    {
+      "slotId": 11,
+      "word": "from",
+      "charCount": 5
+    },
+    {
+      "slotId": 12,
+      "word": "them",
+      "charCount": 5
+    },
+    {
+      "slotId": 13,
+      "word": "immediately",
+      "charCount": 12
+    }
+  ],
+  "liveImeSession": {
+    "sessionGeneration": 4,
+    "wordsCommitted": 13,
+    "journalUsedChars": 79,
+    "journalMaxChars": 3000,
+    "journalWordCount": 13,
+    "lastSlotId": 13,
+    "lastWord": "immediately",
+    "lastHostPackage": "com.google.android.apps.translate"
+  }
+}

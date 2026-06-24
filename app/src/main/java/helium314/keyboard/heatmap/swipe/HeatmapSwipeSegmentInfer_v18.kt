@@ -1,0 +1,104 @@
+// SPDX-License-Identifier: GPL-3.0-only
+
+// ai-note: Block 3 step 15t — touch-down start anchors path; v12 normalize
+
+package helium314.keyboard.heatmap.swipe
+
+import helium314.keyboard.heatmap.learning.HeatmapCoordinateMap_v1
+import helium314.keyboard.keyboard.Keyboard
+import helium314.keyboard.latin.common.InputPointers
+
+object HeatmapSwipeSegmentInfer_v18 {
+
+    data class Result(
+        val startKeyLabel: String?,
+        val pathLetters: List<String>,
+        val pathLettersRaw: List<String>,
+        val endKeyLabel: String?,
+        val beatCount: Int,
+        val beatCountRaw: Int,
+        val classifiedBeats: List<HeatmapGeometryClassifier_v1.ClassifiedBeat>,
+        val straightLine: HeatmapSwipeStraightLine_v1.Analysis,
+        val maxWordLength: Int,
+        val normalized: HeatmapPathLettersNormalize_v2.Normalized,
+        val touchedLetters: Set<String>,
+        val touchCounts: Map<String, Int>,
+        val rejectedTouchLetters: Set<String>,
+        val strokeOrderLetters: List<String>,
+        val doublePrefixIndices: Set<Int>,
+    )
+
+    fun infer(keyboard: Keyboard, pointers: InputPointers): Result? {
+        val layout = HeatmapCoordinateMap_v1.fromKeyboard(keyboard) ?: return null
+        val raw = HeatmapSwipeRawBeatInfer_v3.infer(keyboard, pointers) ?: return null
+        val graph = HeatmapKeyNeighborGraph_v2.fromLayout(layout)
+        val touch = HeatmapSwipeStrokeTouchSet_v5.collect(layout, pointers)
+        val touchStart = touch.startLabel?.takeIf { it.isNotEmpty() }
+        val normalized = HeatmapPathLettersNormalize_v12.normalize(
+            cornerPath = raw.pathLetters,
+            neighborGraph = graph,
+            touch = touch,
+            startLabel = touchStart,
+        )
+        val straight = HeatmapSwipeStraightLine_v1.analyze(pointers)
+        val pathLetters = normalized.letters
+        if (pathLetters.isEmpty()) return null
+        val wiggleHints = HeatmapSwipeKeyWiggleDetector_v2.detect(layout, pointers, pathLetters)
+        val doublePrefixIndices = HeatmapSwipeDoublePrefixHint_v1.hintIndices(
+            pathLetters, raw.beatCountRaw, wiggleHints,
+        )
+        val startLabel = pickStart(touch.startLabel, pathLetters, touch.touched)
+        val endLabel = pickEnd(touch.liftLabel, pathLetters, touch.touched)
+        val beatCountEffective = pathLetters.size.coerceAtLeast(raw.beatCount)
+        val maxWordLength = HeatmapSwipeMaxWordLenPolicy_v1.maxDictLen(
+            pathLetters.size,
+            beatCountEffective,
+            touch.touched.size,
+        )
+        return Result(
+            startKeyLabel = startLabel,
+            pathLetters = pathLetters,
+            pathLettersRaw = raw.pathLetters,
+            endKeyLabel = endLabel,
+            beatCount = beatCountEffective,
+            beatCountRaw = raw.beatCountRaw,
+            classifiedBeats = mapClassifiedBeats(raw.classifiedBeats),
+            straightLine = straight,
+            maxWordLength = maxWordLength,
+            normalized = normalized,
+            touchedLetters = touch.touched,
+            touchCounts = touch.counts,
+            rejectedTouchLetters = touch.rejectedTouchLetters,
+            strokeOrderLetters = touch.orderedLetters,
+            doublePrefixIndices = doublePrefixIndices,
+        )
+    }
+
+    private fun mapClassifiedBeats(
+        beats: List<HeatmapGeometryClassifier_v2.ClassifiedBeat>,
+    ): List<HeatmapGeometryClassifier_v1.ClassifiedBeat> =
+        beats.map { beat ->
+            HeatmapGeometryClassifier_v1.ClassifiedBeat(
+                x = beat.x,
+                y = beat.y,
+                index = beat.index,
+                kind = when (beat.kind) {
+                    HeatmapGeometryClassifier_v2.BeatKind.START ->
+                        HeatmapGeometryClassifier_v1.BeatKind.START
+                    HeatmapGeometryClassifier_v2.BeatKind.CORNER ->
+                        HeatmapGeometryClassifier_v1.BeatKind.CORNER
+                    HeatmapGeometryClassifier_v2.BeatKind.END ->
+                        HeatmapGeometryClassifier_v1.BeatKind.END
+                    HeatmapGeometryClassifier_v2.BeatKind.BRIDGE ->
+                        HeatmapGeometryClassifier_v1.BeatKind.BRIDGE
+                },
+            )
+        }
+
+    private fun pickStart(touch: String?, letters: List<String>, touched: Set<String>): String? =
+        touch?.takeIf { it.isNotEmpty() }
+            ?: letters.firstOrNull { it in touched }
+
+    private fun pickEnd(lift: String?, letters: List<String>, touched: Set<String>): String? =
+        lift?.takeIf { it in touched } ?: letters.lastOrNull { it in touched }
+}

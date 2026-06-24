@@ -9,6 +9,9 @@
 -keep class helium314.keyboard.latin.NgramContext
 -keep class helium314.keyboard.latin.makedict.ProbabilityInfo
 
+# Heatmap learning instrumentation (beta 0.0.0.1+)
+-keep class helium314.keyboard.heatmap.learning.** { *; }
+
 # after upgrading to gradle 8, stack traces contain "unknown source"
 -keepattributes SourceFile,LineNumberTable
 -dontobfuscate

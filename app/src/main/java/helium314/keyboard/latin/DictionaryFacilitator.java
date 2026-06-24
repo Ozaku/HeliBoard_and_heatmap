@@ -144,6 +144,12 @@ public interface DictionaryFacilitator {
 
     boolean isValidSuggestionWord(final String word);
 
+    /**
+     * The current main dictionary, if any. Used by the heatmap gesture decoder to enumerate the
+     * tap-typing lexicon into an in-memory trie. May be null while the main dictionary is loading.
+     */
+    @Nullable helium314.keyboard.latin.dictionary.Dictionary getMainDictionary();
+
     void clearUserHistoryDictionary(final Context context);
 
     String dump(final Context context);

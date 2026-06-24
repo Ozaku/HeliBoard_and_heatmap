@@ -1,0 +1,95 @@
+================================================================================
+
+YOU run these in PowerShell — agent focuses on code only
+
+================================================================================
+
+
+
+OPEN POWERSHELL, then:
+
+
+
+  cd "c:\Users\Ozaku\Desktop\keyboard_thing\HeliBoard_and_heatmap"
+
+
+
+  $adb = "$env:LOCALAPPDATA\Android\Sdk\platform-tools\adb.exe"
+
+
+
+  # 1) Phone connected?
+
+  & $adb devices
+
+
+
+  # 2) Clean build + install (first/full build often 6–10 min — wait for BUILD SUCCESSFUL)
+
+  .\gradlew.bat clean :app:installDebugNoMinify
+
+  # C/C++ "warning:" lines are normal. Failure is only if you see BUILD FAILED.
+
+
+
+  # If install fails with incompatible signature:
+
+  & $adb uninstall helium314.keyboard.debug
+
+  .\gradlew.bat :app:installDebugNoMinify
+
+
+
+VERIFY ON PHONE (not optional)
+
+  - System keyboard list: enable and SELECT **Heatmap KB (beta)** — NOT store HeliBoard
+
+  - Open **Heatmap KB Settings** → Heatmap Smart Keyboard → Instrumentation status
+
+  - Top line must say: **Heatmap learning beta 0.0.0.10** (or newer)
+
+  - After typing elsewhere with spaces, tap status row:
+
+      **Snapshot written by beta:** should match that version
+      **Last flush —** Reason / Host app / Flushes recorded (step 1.11)
+
+      **Lifetime commits** should increase
+
+      **Host app:** should be the app you typed in (e.g. com.google.android.gm)
+
+
+
+LOGCAT (proves IME is committing)
+
+  & $adb logcat -c
+
+  # type a few words with spaces in Notes or Gemini
+
+  & $adb logcat -d -s HeatmapInstr
+
+
+
+  Expect lines like:
+
+    commit WordSlot#1 host=com.... tap decided committed=hello ...
+
+  If you only see: skip commit (learning off) → turn on **Enable learning** in settings
+
+
+
+WRONG APK?
+
+  & $adb shell pm list packages | findstr helium314
+
+  You want: package:helium314.keyboard.debug installed
+
+  Store HeliBoard alone does NOT include heatmap instrumentation.
+
+
+
+================================================================================
+
+END
+
+================================================================================
+

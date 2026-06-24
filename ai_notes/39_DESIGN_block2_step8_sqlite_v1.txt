@@ -1,0 +1,37 @@
+DESIGN — Block 2 step 8 SQLite learning store (beta 0.0.0.18)
+================================================================================
+ROADMAP_STEP → 8 · Block 1 metrics (1.14) deferred for Block 2 perf testing
+
+GOAL
+  Persist each gated word commit to heatmap_store.db under files/heatmap_learning/.
+  Counts survive process death; visible in debug status + JSON export.
+
+FILES (new)
+  HeatmapLearningDatabase_v1.kt — schema v1: meta, key_stat, word_pair, word_commit
+  HeatmapLearningStore_v1.kt — recordWordCommit, readSnapshot, formatStatusBlock
+  HeatmapLayoutContext_v1.kt — locale from Settings; layout_hash placeholder layout_v0
+  HeatmapInstrumentationSnapshot_v8.kt — status adds learning store block
+
+HOOK
+  HeatmapWordSlotSession_v4.onWordCommitted — after session built, before lastCommittedWord update;
+  previousWord = lastCommittedWord.get() for bigram bump.
+
+KEY STAT PROXY
+  Until step 9 coordinate map: first letter of committed word (lowercase) per locale/layout/mode.
+  corrected_from_count += 1 when typed != committed.
+
+WORD PAIR
+  ON CONFLICT increment pair_count for (locale, prev, next).
+
+VERIFY (user)
+  1. Build/install per POWERSHELL_INSTALL_AND_VERIFY.txt
+  2. Type several words in normal field (learning ON, not password)
+  3. Heatmap Smart Keyboard → Refresh status → Persisted commits > 0
+  4. Force-stop app → reopen → counts unchanged
+  5. Export JSON → learningStore.persistedCommitCount matches
+
+NEXT (Block 2)
+  9 — coordinate map + real layout hash
+  10 — curve/path buckets
+  11 — reset learning buttons
+  12 — conservative weight updates from corrections

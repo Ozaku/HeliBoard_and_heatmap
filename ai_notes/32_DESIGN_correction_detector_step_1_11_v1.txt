@@ -1,0 +1,332 @@
+================================================================================
+
+DESIGN — Step 1.11 Correction detector skeleton (flush only, no diff)
+
+Roadmap 25 step 4 (partial) · Block 1 sub-step 1.11
+
+Beta target: 0.0.0.10 · ROADMAP_STEP → 4
+
+================================================================================
+
+
+
+GOAL
+
+  Prove we hear the right “paragraph ended / field changed” moments before we try to
+
+  diff field text or update finalText on WordSession. Behavior today unchanged for typing.
+
+
+
+SCOPE (this step)
+
+  IN:
+
+    - FlushReason enum + CorrectionFlush_v1 event record
+
+    - onFlush() called from known IME lifecycle points
+
+    - Logcat (HeatmapInstr) + cross-process prefs counters for Settings status
+
+    - Finalize in-memory WordSessions as “stable at flush” (metadata only)
+
+  OUT (deferred to 1.12+):
+
+    - InputConnection before/after text diff
+
+    - Updating WordSession.finalText from host field
+
+    - SQLite heatmap merge
+
+    - Per-key correction weights
+
+
+
+WHY FLUSH FIRST
+
+  Planning (11_FEATURE_paragraph_heatmap): start Approach 1 + 3 — track keyboard commits,
+
+  flush on send / field exit / window slide. Notes-app gaps (host flags) are a separate
+
+  issue; flush hooks still run even if later diff returns empty.
+
+
+
+--------------------------------------------------------------------------------
+
+FLUSH REASONS (CorrectionFlushReason_v1)
+
+--------------------------------------------------------------------------------
+
+  FIELD_BLUR     — keyboard hidden or input view finished (onFinishInputView)
+
+  HOST_CHANGED   — new editor package before session reset (onInputViewStarted)
+
+  IME_ACTION     — editor action: Go/Done/Search/Send (InputLogic send path)
+
+  WINDOW_SLIDE   — paragraph journal evicted oldest entry (char budget trim)
+
+  SESSION_RESET  — explicit resetSession (new field in other app; debug)
+
+  MANUAL_DEBUG   — tap “Instrumentation status” refresh (optional, counts only)
+
+
+
+Each flush stores:
+
+  - reason, timestampMs, hostPackage, sessionGeneration
+
+  - wordsInJournal, sessionsInRegistry, lifetimeCommits (from prefs)
+
+
+
+--------------------------------------------------------------------------------
+
+NEW TYPES (package heatmap.learning)
+
+--------------------------------------------------------------------------------
+
+  CorrectionFlushReason_v1.kt     — enum above
+
+  CorrectionFlushRecord_v1.kt   — data class for one flush event
+
+  CorrectionDetector_v1.kt        — object: onFlush(context, reason, hostPackage?)
+
+
+
+  CorrectionDetector_v1.onFlush (skeleton body):
+
+    1. If !learning enabled → return
+
+    2. Build CorrectionFlushRecord_v1 snapshot from WordSessionRegistry + journal
+
+    3. HeatmapCrossProcessPrefs_v2: increment flush counter, save last reason/host/time
+
+    4. Log.i(HeatmapInstr, "flush $reason host=... words=... sessions=...")
+
+    5. wordSessions.markAllStableAtFlush() — stub: set flag on registry entries OR
+
+       simply log session count (no finalText mutation in 1.11)
+
+
+
+  WordSessionRegistry_v2 extension:
+
+    - markStableAtFlush(): iterate sessions, no-op except debug log count
+
+    - (1.12 adds per-slot “needsFinalTextSync” flag)
+
+
+
+--------------------------------------------------------------------------------
+
+HOOK POINTS (where onFlush is called)
+
+--------------------------------------------------------------------------------
+
+  LatinIME.onFinishInputViewInternal
+
+    → CorrectionDetector_v1.onFlush(FIELD_BLUR)
+
+
+
+  HeatmapWordSlotSession_v4.onInputViewStarted (start of function, before reset)
+
+    → onFlush(HOST_CHANGED) when lastHostKey != new host
+
+    → then existing resetSession
+
+
+
+  HeatmapWordSlotSession_v4.resetSession (end)
+
+    → onFlush(SESSION_RESET) — optional, avoid double with HOST_CHANGED:
+
+      only SESSION_RESET when reset without host change (internal)
+
+
+
+  ParagraphJournal_v1.trimToBudget (when entry removed)
+
+    → callback or call from appendCommittedWord after trim:
+
+      onFlush(WINDOW_SLIDE) once per trim batch (not per char)
+
+
+
+  InputLogic — IME action commit / send:
+
+    - Locate existing “send” / editor action handling (IME_ACTION_GO etc.)
+
+    → onFlush(IME_ACTION) when action commits or sends message
+
+
+
+  HeatmapSmartKeyboardScreen — status row onClick:
+
+    → onFlush(MANUAL_DEBUG) optional (helps verify without logcat)
+
+
+
+Order on host switch:
+
+  1. flush HOST_CHANGED (capture sessions from outgoing field)
+
+  2. resetSession
+
+
+
+--------------------------------------------------------------------------------
+
+SETTINGS / STATUS (cross-process, like snapshot)
+
+--------------------------------------------------------------------------------
+
+  Prefs keys (HeatmapInstrumentationSnapshot_v7 or CorrectionDetector prefs):
+
+    - heatmap_last_flush_reason
+
+    - heatmap_last_flush_time_ms
+
+    - heatmap_last_flush_host
+
+    - heatmap_total_flushes
+
+
+
+  Instrumentation status block (after “Last commit from IME”):
+
+    — Last flush —
+
+    Reason: FIELD_BLUR
+
+    Host: com.google.android.gm
+
+    Flushes recorded: 42
+
+    Time: 12s ago
+
+
+
+--------------------------------------------------------------------------------
+
+LOGCAT (user verification without Notes app)
+
+--------------------------------------------------------------------------------
+
+  Tag: HeatmapInstr
+
+  On word commit (existing):
+
+    commit WordSlot#3 host=com.foo ...
+
+  On flush (new):
+
+    flush FIELD_BLUR host=com.foo journalWords=5 sessions=5
+
+
+
+  Test: type 3 words → press Home → expect FIELD_BLUR
+
+        switch app → expect HOST_CHANGED on new field focus
+
+        type until journal trims → expect WINDOW_SLIDE (if window small)
+
+
+
+--------------------------------------------------------------------------------
+
+FILES TO ADD / TOUCH (implementation pass)
+
+--------------------------------------------------------------------------------
+
+  NEW:
+
+    CorrectionFlushReason_v1.kt
+
+    CorrectionFlushRecord_v1.kt
+
+    CorrectionDetector_v1.kt
+
+    HeatmapInstrumentationSnapshot_v7.kt (flush lines in status) OR extend v6
+
+
+
+  EDIT:
+
+    HeatmapWordSlotSession_v4.kt — host-change flush, journal trim hook
+
+    LatinIME.java — FIELD_BLUR
+
+    InputLogic.java — IME_ACTION (minimal: one clear send path)
+
+    ParagraphJournal_v1.kt — notify on trim (callback or return evicted count)
+
+    HeatmapSmartKeyboardScreen.kt — show flush lines (reads prefs)
+
+    build.gradle.kts — HEATMAP_LEARNING_BETA 0.0.0.10, ROADMAP_STEP 4
+
+
+
+  TEST (unit):
+
+    CorrectionDetector_v1Test — flush increments counter (Robolectric or mock prefs)
+
+
+
+  archived: move superseded snapshot to archived_heatmap_learning/ if versioned
+
+
+
+--------------------------------------------------------------------------------
+
+NOT IN 1.11 (explicitly step 1.12)
+
+--------------------------------------------------------------------------------
+
+  - onUpdateSelection-driven in-window edit detection
+
+  - getTextBeforeCursor / getTextAfterCursor snapshot diff
+
+  - WordSession.finalText := field text
+
+  - CorrectionEvent { slotId, committed, final, editKind }
+
+
+
+--------------------------------------------------------------------------------
+
+USER TEST AFTER BUILD (you run PowerShell)
+
+--------------------------------------------------------------------------------
+
+  See POWERSHELL_INSTALL_AND_VERIFY.txt — expect beta 0.0.0.10.
+
+  1. Type in Gmail → Home button → logcat flush FIELD_BLUR
+
+  2. Open Chrome → tap field → logcat flush HOST_CHANGED
+
+  3. Status shows Last flush reason matching last action
+
+
+
+--------------------------------------------------------------------------------
+
+WHEN TO BUILD
+
+--------------------------------------------------------------------------------
+
+  User says: “build 1.11” (or “go ahead and implement 1.11”).
+
+  Agent implements above, bumps beta to 0.0.0.10, updates 26_BLOCK1 substeps, does NOT
+
+  run gradlew unless user asks.
+
+
+
+================================================================================
+
+END DESIGN 1.11
+
+================================================================================
+

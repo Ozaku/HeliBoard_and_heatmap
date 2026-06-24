@@ -1,0 +1,126 @@
+================================================================================
+USER DECISIONS, GLOSSARY & EXPLANATIONS v2
+For maintainer + AI agents — plain language
+================================================================================
+
+--------------------------------------------------------------------------------
+WHAT "HYBRID SWIPE" MEANT (and what we do instead)
+--------------------------------------------------------------------------------
+In 15_IMPLEMENTATION_GUIDE, "hybrid" described a TRANSITION strategy for engineers:
+
+  LEGACY PATH (HeliBoard today)
+    Finger stroke → ProximityInfo (many nearby keys) → native dictionary search
+    → sometimes needs closed-source gesture library for full quality.
+
+  HYBRID TRANSITION (temporary, maximum compatibility)
+    Phase A: Still run legacy suggest so keyboard keeps working on all devices.
+    Phase B: Add OUR scoring on top (three-signal / heatmap / almost-matches).
+    Phase C: Replace inner decode with OUR literal narrowing engine (below).
+    Learning and heatmap work in Phase A–B so data exists before Phase C is perfect.
+
+  END STATE (user's goal — not hybrid forever)
+    Custom open-source swipe engine only:
+    - Progressive dictionary narrowing (STARting walkthrough in 20_*.txt)
+    - Sharp corners + curve direction changes → letter hypotheses
+    - Heatmap + correction history breaks ties
+    - Works with normal installed .dict files (no special swipe dictionary)
+
+User does NOT want AI/LLM. Statistical / classical ML is OK:
+  - Counts, weights, decay, optional lightweight models trained on-device from
+    user's own corrections only (no cloud training, no generative text).
+
+"Maximum compatibility" means:
+  - No hard dependency on swypelibs or Google gesture SO.
+  - Keep HeliBoard dictionary install/load paths (main, user, downloaded dicts).
+  - Tap typing path stays functional while swipe engine is rebuilt.
+  - Graceful degradation if new decoder low-confidence → show alternates, don't crash.
+
+--------------------------------------------------------------------------------
+WHAT "LOOPS" MEANT (Q3 explanation)
+--------------------------------------------------------------------------------
+A "loop" is when your finger draws a stroke that crosses the same keyboard area
+more than once, often circling near two keys before leaving.
+
+  Example from original plan: swiping PLASTIC where the finger loops around the
+  A and S region before continuing to T.
+
+Why it was called out as hard:
+  - A simple straight-line model sees only order of first crossing.
+  - A loop visits A, S, maybe A again — order alone can look like nonsense ("sts").
+  - The keyboard must decide: one letter (A), two letters (A then S), or a vowel
+    you barely grazed.
+
+Your approach (better than "defer loops"):
+  - Treat every direction change on a curve as a candidate single-letter anchor.
+  - Use dictionary narrowing: if "sts" has no entries, backtrack and try vowel
+    near-miss (your STA example in STARTING walkthrough).
+  - Learn curve shapes per user: store compact "curve signature → letters/word fixes"
+    so PLASTIC-like paths improve over weeks of use.
+
+So: "loops" are not a separate feature flag — they are hard cases of curves that
+the literal + learning system must handle gradually with more data.
+
+--------------------------------------------------------------------------------
+COMMON TYPO LIST (renamed from Naughty List)
+--------------------------------------------------------------------------------
+Purpose: strings the user often produces by mistake (swipe/autocorrect) and wants
+suppressed from automatic output — NOT punishing deliberate typing.
+
+Rules (user confirmed):
+  1. Settings name: "Common Typo List" (user-visible).
+  2. Pipeline ban: swipe decode and aggressive autocorrect should not resurrect
+     chronic typos (e.g. "tye" → prefer "the").
+  3. Tap escape hatch: same word tap-typed twice in a row at the SAME word slot
+     → allow (user insists they mean it). Next word resets escape hatch.
+  4. Swipe-then-tap fix flow:
+       - User swipes → wrong word committed or shown.
+       - User deletes, tap-types replacement slowly.
+       - Autocorrect mostly OFF for that word position.
+       - Engine compares tap sequence to stored swipe "almost matches".
+       - If tap matches an alternate swipe candidate → offer/silent fix toward it.
+       - If no match → likely intentional new word; offer "add to dictionary?" later.
+
+Per-word session object must track:
+  - inputMode history (swipe attempt, delete, tap retry)
+  - swipeTrace + runnerUpWords[]
+  - tapTrace
+  - slotId (which word in paragraph buffer — does not carry across words)
+
+Unban: removes list restriction only; keeps all heatmap / swipe / letter weights.
+
+--------------------------------------------------------------------------------
+UNBAN / WEIGHTS — what you asked for (Q7 clarified)
+--------------------------------------------------------------------------------
+You want a multi-layer memory, not a single on/off ban:
+
+  WORD layer: whole strings (common typo, almost-correct swipe outputs)
+  LETTER layer: per-key hit/miss, per-position in word
+  WORD-PAIR layer: wrongWord → rightWord correction counts
+  SWIPE layer: path signature, start key, end key, curve buckets
+  ALIGNMENT layer: for each letter, where finger was vs where key center is
+
+When user removes word from Common Typo List:
+  - Still remember "this swipe shape produced this wrong word"
+  - Still down-rank that wrong word on similar future swipes
+  - User can type it manually if they insist (double-tap rule)
+
+This is intentional: learning never forgets without explicit "Reset learning data".
+
+--------------------------------------------------------------------------------
+SETTINGS HUB (user confirmed)
+--------------------------------------------------------------------------------
+All new options live under one category, e.g.:
+  "Heatmap Smart Keyboard" or "Heatmap Smart Keyboard Settings"
+
+See 18_SETTINGS_MENU_SPEC_v2.txt for full list.
+
+--------------------------------------------------------------------------------
+PRODUCT GOAL (one sentence)
+--------------------------------------------------------------------------------
+The keyboard should converge toward getting swipe and tap right without user
+corrections, using dense local statistics from every accept/reject/edit — not AI
+guessing.
+
+================================================================================
+END v2
+================================================================================

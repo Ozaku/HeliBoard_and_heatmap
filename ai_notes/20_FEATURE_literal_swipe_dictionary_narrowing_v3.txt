@@ -1,0 +1,104 @@
+================================================================================
+LITERAL SWIPE ENGINE v3 — dictionary narrowing + per-key confidence
+Supersedes commit/strip behavior described in v2 where it conflicts with v3 feedback
+================================================================================
+
+CORE PHILOSOPHY (locked)
+  - Do NOT "guess the word" from language model while ignoring geometry.
+  - DO infer letters segment-by-segment; narrow dictionary prefix each step.
+  - Per-key and per-path biases from user corrections raise/lower confidence on
+    keys and prefixes, not swap in #2 whole word at commit time.
+  - On lift: commit top match to text field; keep runner-ups in suggestion strip.
+
+--------------------------------------------------------------------------------
+STATE MACHINE (one gesture)
+--------------------------------------------------------------------------------
+  anchorStartKey, anchorEndKey
+  pathLetters[]           // committed letter hypotheses
+  activePrefix            // current string prefix in trie
+  runnerUps[]             // scored pruned candidates + snapshot prefix depth
+  segmentConfidences[]    // per-step key confidence after heatmap
+  slotId                  // journal id (Phase 1)
+
+--------------------------------------------------------------------------------
+SEGMENT LOOP (each straight line, corner, or curve chunk)
+--------------------------------------------------------------------------------
+  1. Map touch segment to keyboard coordinates → candidate key(s) at point.
+  2. Apply row/region rules (e.g. stroke reaches bottom row → bottom-row letters
+     must be considered for that segment).
+  3. If extending pathLetters breaks dictionary (no prefix), try near-key vowel /
+     heatmap-biased alternates (NE from N+W corner miss, etc.).
+  4. activePrefix = extended prefix; query trie — prune impossible branches.
+  5. runnerUps += pruned branches with scores.
+  6. segmentConfidences += heatmap bias for chosen key at this index.
+
+--------------------------------------------------------------------------------
+ON FINGER UP
+--------------------------------------------------------------------------------
+  - Intersect activePrefix with words matching anchorEndKey.
+  - Rank by path fit + dictionary frequency + learned biases.
+  - COMMIT #1 to text field.
+  - POPULATE suggestion strip with runnerUps (top N).
+  - Store full session on slot for retroactive correction inside window.
+
+--------------------------------------------------------------------------------
+CANONICAL EXAMPLE A — STARTING (from prior doc)
+--------------------------------------------------------------------------------
+  See v2 file section USER STARTING EXAMPLE — still valid.
+
+--------------------------------------------------------------------------------
+CANONICAL EXAMPLE B — NEXT (maintainer, 2026 session)
+--------------------------------------------------------------------------------
+  > Start on N
+    Prefix "n"; keep reduced-confidence branches that could still resolve (not
+    materialize entire dictionary — trie walk only).
+
+  > Straight line N → bottom-right area of W
+    No "nw,bw,hw,jw,mw" viable → vowel miss → assume E → prefix "ne" high;
+    "be,he,je,me" lower confidence.
+
+  > Continue to gap between X and C (closer to X)
+    Refine: "nex,nec" strong cluster; "bec,hec,mec,mex,hex" weaker; discard
+    branches that return zero dictionary hits (e.g. jec,jex,bex).
+
+  > Continue through T
+    "next" dominates given 4-letter path length; shed "because,hectic,..." from
+    earlier runnerUps as length incompatible.
+
+  > Lift
+    Commit "next" to field; strip may still offer near alternates if any scored.
+
+--------------------------------------------------------------------------------
+ANTI-PATTERN — find / food (why old keyboards fail)
+--------------------------------------------------------------------------------
+  Wrong: swipe through bottom-row N, LM outputs "food" with no N in path.
+  Right: path forces bottom-row letter in word at that segment; narrowing +
+    training moves probability to "find" when user repeatedly corrects food→find
+    on THAT geometry — not by picking second dictionary candidate at commit.
+
+--------------------------------------------------------------------------------
+SWIPE-TO-TAP AT SAME SLOT (links S1)
+--------------------------------------------------------------------------------
+  If user deletes committed swipe word and tap-types at same slotId:
+    - Minimal autocorrect interference.
+    - Match tap keys to runnerUps from that swipe.
+    - No match → offer add-to-dictionary; do not auto-add.
+
+--------------------------------------------------------------------------------
+COORDINATE MAP (links S5 feedback)
+--------------------------------------------------------------------------------
+  At keyboard layout load + after geometry training:
+    - Base key rects from layout XML.
+    - Per-mode offset scale[] and optional center shift[] (no overlap, 80% min
+      size, max grow to neighbor midpoint).
+    - All segment inference uses map: touch (x,y) → key id + sub-region.
+
+--------------------------------------------------------------------------------
+LETTER WEIGHT + BEAT (maintainer addendum — see 44_DESIGN_block3_swipe_letter_weight_and_beat_v1.txt)
+--------------------------------------------------------------------------------
+  First letter strongest; middle letters loosest (more so in long words); last letter
+  moderate (often overshot). Beat = one letter per sharp direction change on polyline.
+
+================================================================================
+END v3
+================================================================================
