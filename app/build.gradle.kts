@@ -18,8 +18,8 @@ android {
         versionCode = 3901
         versionName = "3.9"
         // ai-note: heatmap learning beta track (see HeatmapLearningBuildInfo_v1.kt)
-        buildConfigField("String", "HEATMAP_LEARNING_BETA", "\"0.0.0.57\"")
-        buildConfigField("int", "HEATMAP_LEARNING_ROADMAP_STEP", "18")
+        buildConfigField("String", "HEATMAP_LEARNING_BETA", "\"0.0.0.58\"")
+        buildConfigField("int", "HEATMAP_LEARNING_ROADMAP_STEP", "19")
         ndk {
             abiFilters.clear()
             abiFilters.addAll(listOf("armeabi-v7a", "arm64-v8a", "x86", "x86_64"))

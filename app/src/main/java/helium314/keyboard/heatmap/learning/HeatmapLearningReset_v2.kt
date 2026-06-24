@@ -86,12 +86,13 @@ object HeatmapLearningReset_v2 {
             try {
                 db.delete(HeatmapLearningDatabase_v1.TABLE_LETTER_CONFUSION, null, null)
                 db.delete(HeatmapLearningDatabase_v1.TABLE_WORD_CORRECTION, null, null)
+                HeatmapUserProfile_v1.clear(context)
                 touchMeta(db)
                 db.setTransactionSuccessful()
             } finally {
                 db.endTransaction()
             }
-            Log.i(TAG, "wipeTypoWeights ok (letter_confusion + word_correction)")
+            Log.i(TAG, "wipeTypoWeights ok (letter_confusion + word_correction + personal_ledger)")
             true
         }.getOrElse { e ->
             Log.e(TAG, "wipeTypoWeights failed", e)

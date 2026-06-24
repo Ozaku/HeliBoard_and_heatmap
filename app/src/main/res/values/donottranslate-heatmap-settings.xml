@@ -35,11 +35,11 @@
     <string name="heatmap_reset_geometry_confirm_title" translatable="false">Reset key geometry?</string>
     <string name="heatmap_reset_geometry_confirm_message" translatable="false">Deletes stored key bounds and all alignment offsets. The keyboard will re-measure layout geometry on the next commits.</string>
     <string name="heatmap_reset_geometry_done" translatable="false">Key geometry data was cleared.</string>
-    <string name="heatmap_reset_typo_weights_title" translatable="false">Reset typo weights</string>
-    <string name="heatmap_reset_typo_weights_summary" translatable="false">Clears learned letter-confusion and word-correction weights from your autocorrect fixes. Commits and key seen-counts are kept. Common Typo List (Block 6) will use this button too.</string>
-    <string name="heatmap_reset_typo_weights_confirm_title" translatable="false">Reset typo weights?</string>
-    <string name="heatmap_reset_typo_weights_confirm_message" translatable="false">Deletes stored letter-confusion pairs and whole-word correction patterns learned from typed≠committed commits. Your word history and tap key stats stay intact.</string>
-    <string name="heatmap_reset_typo_weights_done" translatable="false">Typo and correction weights were cleared.</string>
+    <string name="heatmap_reset_typo_weights_title" translatable="false">Reset Personal Dictionary Boosts</string>
+    <string name="heatmap_reset_typo_weights_summary" translatable="false">Clears learned swipe shape boosts and word frequency boosts. Commits and key seen-counts are kept.</string>
+    <string name="heatmap_reset_typo_weights_confirm_title" translatable="false">Reset Personal Dictionary Boosts?</string>
+    <string name="heatmap_reset_typo_weights_confirm_message" translatable="false">Deletes stored swipe shape patterns and whole-word correction boosts learned from your typing. Your word history and tap key stats stay intact.</string>
+    <string name="heatmap_reset_typo_weights_done" translatable="false">Personal Dictionary Boosts were cleared.</string>
     <string name="heatmap_reset_learning_title" translatable="false">Reset all learning</string>
     <string name="heatmap_reset_learning_summary" translatable="false">Deletes heatmap database, session exports, and all on-device training counters. Your toggles and slider settings stay as they are. The keyboard must re-learn from your typing.</string>
     <string name="heatmap_reset_confirm_title" translatable="false">Delete ALL training data?</string>

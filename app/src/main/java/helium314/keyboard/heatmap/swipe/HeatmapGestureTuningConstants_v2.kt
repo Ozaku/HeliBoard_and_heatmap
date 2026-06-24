@@ -13,7 +13,7 @@ package helium314.keyboard.heatmap.swipe
 
 object HeatmapGestureTuningConstants_v2 {
 
-    const val TUNING_REVISION = 8
+    const val TUNING_REVISION = 9
 
     // --- Geometry channels (mirror v1) ---
     const val RESAMPLE_N = 48

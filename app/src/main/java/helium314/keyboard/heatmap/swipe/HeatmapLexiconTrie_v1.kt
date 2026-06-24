@@ -71,11 +71,15 @@ class HeatmapLexiconTrie_v1 private constructor(
             val ch = w[depth]
             var j = i + 1
             while (j < hi && words[j].length > depth && words[j][depth] == ch) j++
-            val allowed = if (depth == 0) ch in ctx.startChars else true
-            if (allowed) {
-                val nv = earliestMatch(ch, fromIdx, ctx)
-                if (nv >= 0) {
-                    dfs(depth + 1, i, j, nv + 1, ctx)
+            if (ch == '\'') {
+                dfs(depth + 1, i, j, fromIdx, ctx)
+            } else {
+                val allowed = if (depth == 0) ch in ctx.startChars else true
+                if (allowed) {
+                    val nv = earliestMatch(ch, fromIdx, ctx)
+                    if (nv >= 0) {
+                        dfs(depth + 1, i, j, nv + 1, ctx)
+                    }
                 }
             }
             i = j
@@ -155,12 +159,16 @@ class HeatmapLexiconTrie_v1 private constructor(
             while (j < hi && words[j].length > depth && words[j][depth] == ch) j++
 
             // Transition (a): consume the current anchor (advances index, arms doubling).
-            if (anchorIndex < ctx.anchors.size && anchorMatches(ch, ctx.anchors[anchorIndex], ctx)) {
-                adfs(depth + 1, i, j, anchorIndex + 1, ch, true, ctx)
-            }
-            // Transition (b): double the just-matched anchor letter (no advance, disarms doubling).
-            if (canDouble && ch == lastChar) {
-                adfs(depth + 1, i, j, anchorIndex, lastChar, false, ctx)
+            if (ch == '\'') {
+                adfs(depth + 1, i, j, anchorIndex, lastChar, canDouble, ctx)
+            } else {
+                if (anchorIndex < ctx.anchors.size && anchorMatches(ch, ctx.anchors[anchorIndex], ctx)) {
+                    adfs(depth + 1, i, j, anchorIndex + 1, ch, true, ctx)
+                }
+                // Transition (b): double the just-matched anchor letter (no advance, disarms doubling).
+                if (canDouble && ch == lastChar) {
+                    adfs(depth + 1, i, j, anchorIndex, lastChar, false, ctx)
+                }
             }
             i = j
         }
@@ -251,7 +259,7 @@ class HeatmapLexiconTrie_v1 private constructor(
                     if (frequency < minFreq) return
                     var alpha = true
                     for (c in word) {
-                        if (!c.isLetter()) {
+                        if (!c.isLetter() && c != '\'') {
                             alpha = false
                             break
                         }

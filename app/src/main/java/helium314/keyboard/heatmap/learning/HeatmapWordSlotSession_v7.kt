@@ -217,6 +217,7 @@ object HeatmapWordSlotSession_v7 {
         refreshDebugLoggingFlag(context)
         journal.setMaxChars(HeatmapLearningSettings_v2.getParagraphWindowChars(context))
         journal.setMaxWords(HeatmapLearningSettings_v1.WORD_MEMORY_MAX_WORDS)
+        HeatmapUserProfile_v1.load(context)
     }
 
     @JvmStatic
@@ -426,6 +427,7 @@ object HeatmapWordSlotSession_v7 {
                         )
                 }
                 if (resolved != null) {
+                    HeatmapUserProfile_v1.onChainResolved(context, resolved)
                     enriched = session.copy(
                         correctionChainId = resolved.chainId,
                         correctionAttemptIndex = resolved.attempts.lastIndex,

@@ -59,21 +59,14 @@ object HeatmapLearningReset_v1 {
             deleteExportArtifacts(app)
 
             clearTrainingPrefs(app)
-
+            HeatmapUserProfile_v1.clear(app)
             HeatmapWordSlotSession_v7.clearInMemorySessionAfterTrainingWipe(app)
-
             Log.i(TAG, "wipeAllTrainingData ok")
-
             true
-
         } catch (e: Exception) {
-
             Log.e(TAG, "wipeAllTrainingData failed", e)
-
             false
-
         }
-
     }
 
 

@@ -16,6 +16,7 @@
 //   rankFallback()            -> lexicon-still-building prefix path (mirrors v1)
 package helium314.keyboard.heatmap.swipe
 
+import helium314.keyboard.heatmap.learning.HeatmapUserProfile_v1
 import helium314.keyboard.heatmap.learning.HeatmapCoordinateMap_v1
 import helium314.keyboard.heatmap.learning.HeatmapPathCapture_v3
 import helium314.keyboard.keyboard.Keyboard
@@ -113,15 +114,29 @@ object HeatmapGestureMatchDecode_v2 {
             anchorStr = gen.anchorKeys.joinToString("")
             strictCount = gen.strict.size
             tier = gen.tier
-            val penalty = if (gen.tier == HeatmapAnchorCandidateGen_v1.Tier.STRICT) {
-                1.0
-            } else {
-                HeatmapGestureTuningConstants_v2.FALLBACK_GEO_PENALTY
+
+            val strictScored = scoreAnchorCandidates(gen.strict, features, 1.0, anchorStr)
+            val fallbackScored = scoreAnchorCandidates(gen.fallback, features, HeatmapGestureTuningConstants_v2.FALLBACK_GEO_PENALTY, anchorStr)
+
+            val merged = ArrayList<Pair<String, Double>>(strictScored.size + fallbackScored.size)
+            merged.addAll(strictScored)
+            val strictWords = strictScored.map { it.first }.toSet()
+            for (fb in fallbackScored) {
+                if (fb.first !in strictWords) merged.add(fb)
             }
-            ranked = rankAnchorCandidates(gen.candidates, features, facilitator, resultCap, penalty)
+            merged.sortByDescending { it.second }
+
+            val sourceDict: Dictionary? = facilitator.mainDictionary
+            val out = ArrayList<SuggestedWordInfo>(resultCap)
+            if (sourceDict != null) {
+                for (i in 0 until minOf(resultCap, merged.size)) {
+                    out.add(makeInfo(merged[i].first, merged[i].second, sourceDict))
+                }
+            }
+            ranked = out
             Log.i(
                 TAG,
-                "anchors=$anchorStr tier=$tier strict=$strictCount cands=${gen.candidates.size} " +
+                "anchors=$anchorStr tier=$tier strict=$strictCount cands=${gen.strict.size + gen.fallback.size} " +
                     "top=${ranked.firstOrNull()?.mWord} tuning=${HeatmapGestureTuningConstants_v2.TUNING_REVISION}",
             )
         } else {
@@ -167,28 +182,30 @@ object HeatmapGestureMatchDecode_v2 {
         return if (t.size >= count) t.copyOf(count) else IntArray(count) { it * 16 }
     }
 
-    private fun rankAnchorCandidates(
+    private fun scoreAnchorCandidates(
         candidates: List<HeatmapLexiconTrie_v1.Candidate>,
         features: HeatmapGestureShapeScore_v1.GestureFeatures,
-        facilitator: DictionaryFacilitator,
-        resultCap: Int,
         tierPenalty: Double,
-    ): List<SuggestedWordInfo> {
-        val sourceDict: Dictionary = facilitator.mainDictionary ?: return emptyList()
+        anchorStr: String,
+    ): List<Pair<String, Double>> {
         val scored = ArrayList<Pair<String, Double>>(candidates.size)
         for (cand in candidates) {
             val geo = HeatmapGestureShapeScore_v1.score(cand.word, features)
             if (geo <= 0.0) continue
-            val combined = geo * tierPenalty * freqWeight(cand.frequency)
+            
+            // Apply Heatmap User Profile boosts
+            val shapeBoost = HeatmapUserProfile_v1.getShapeBoost(anchorStr, cand.word)
+            val globalBoost = HeatmapUserProfile_v1.getGlobalBoost(cand.word)
+            
+            // A shape boost is extremely strong evidence of intent.
+            // A global boost is a mild frequency bump.
+            val personalMultiplier = 1.0 + (shapeBoost * 5.0) + (globalBoost * 0.1)
+            
+            val combined = geo * tierPenalty * freqWeight(cand.frequency) * personalMultiplier
             if (combined <= 0.0) continue
             scored.add(cand.word to combined)
         }
-        scored.sortByDescending { it.second }
-        val out = ArrayList<SuggestedWordInfo>(resultCap)
-        for (i in 0 until minOf(resultCap, scored.size)) {
-            out.add(makeInfo(scored[i].first, scored[i].second, sourceDict))
-        }
-        return out
+        return scored
     }
 
     private fun rankFallback(

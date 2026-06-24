@@ -43,19 +43,38 @@ object HeatmapAnchorCandidateGen_v1 {
         val visited = HeatmapVisitedKeySequence_v1.build(points, keyModel)
 
         // --- Tier STRICT ---
+        var strict = emptyList<HeatmapLexiconTrie_v1.Candidate>()
         if (anchorKeys.isNotEmpty()) {
-            val strict = trie.collectAnchorAlignedWords(
+            strict = trie.collectAnchorAlignedWords(
                 anchors = anchorKeys,
                 neighbors = keyModel.neighbors,
                 maxCandidates = c.ANCHOR_MAX_CANDIDATES,
             )
-            if (strict.isNotEmpty()) {
-                return Result(extracted.anchors, anchorKeys, visited, strict, emptyList(), Tier.STRICT)
+        }
+
+        // --- Tier TRANSIT (always generate to catch skipped letters) ---
+        var transit = emptyList<HeatmapLexiconTrie_v1.Candidate>()
+        if (visited.isNotEmpty()) {
+            val startChars = LinkedHashSet<Char>()
+            val anchor = startSeed ?: anchorKeys.firstOrNull() ?: visited.first()
+            startChars.add(anchor)
+            startChars.addAll(keyModel.neighborsOf(anchor))
+            visited.first().let {
+                startChars.add(it)
+                startChars.addAll(keyModel.neighborsOf(it))
             }
+            transit = trie.collectSubsequenceWords(
+                visited = visited,
+                neighbors = keyModel.neighbors,
+                startChars = startChars,
+                maxLen = c.MAX_WORD_LEN,
+                maxCandidates = c.FALLBACK_MAX_CANDIDATES,
+            )
         }
 
         // --- Tier RELAXED: drop one interior anchor (a spurious detected stop/corner) ---
-        if (anchorKeys.size >= 4) {
+        var relaxed = emptyList<HeatmapLexiconTrie_v1.Candidate>()
+        if (strict.isEmpty() && anchorKeys.size >= 4) {
             val seen = HashMap<String, HeatmapLexiconTrie_v1.Candidate>()
             for (i in 1 until anchorKeys.size - 1) {
                 val reduced = ArrayList<Char>(anchorKeys.size - 1)
@@ -70,34 +89,13 @@ object HeatmapAnchorCandidateGen_v1 {
                 for (cand in part) seen.putIfAbsent(cand.word, cand)
                 if (seen.size >= c.ANCHOR_MAX_CANDIDATES) break
             }
-            if (seen.isNotEmpty()) {
-                return Result(extracted.anchors, anchorKeys, visited, emptyList(), seen.values.toList(), Tier.RELAXED)
-            }
+            relaxed = seen.values.toList()
         }
 
-        // --- Tier TRANSIT (last resort): legacy neighbor-tolerant subsequence of crossed keys ---
-        if (visited.isNotEmpty()) {
-            val startChars = LinkedHashSet<Char>()
-            val anchor = startSeed ?: anchorKeys.firstOrNull() ?: visited.first()
-            startChars.add(anchor)
-            startChars.addAll(keyModel.neighborsOf(anchor))
-            visited.first().let {
-                startChars.add(it)
-                startChars.addAll(keyModel.neighborsOf(it))
-            }
-            val transit = trie.collectSubsequenceWords(
-                visited = visited,
-                neighbors = keyModel.neighbors,
-                startChars = startChars,
-                maxLen = c.MAX_WORD_LEN,
-                maxCandidates = c.FALLBACK_MAX_CANDIDATES,
-            )
-            if (transit.isNotEmpty()) {
-                return Result(extracted.anchors, anchorKeys, visited, emptyList(), transit, Tier.TRANSIT)
-            }
-        }
+        val fallback = if (relaxed.isNotEmpty()) relaxed + transit else transit
+        val tier = if (strict.isNotEmpty()) Tier.STRICT else if (relaxed.isNotEmpty()) Tier.RELAXED else if (transit.isNotEmpty()) Tier.TRANSIT else Tier.NONE
 
-        return Result(extracted.anchors, anchorKeys, visited, emptyList(), emptyList(), Tier.NONE)
+        return Result(extracted.anchors, anchorKeys, visited, strict, fallback, tier)
     }
 
     private fun collapseAdjacent(keys: List<Char>): List<Char> {
