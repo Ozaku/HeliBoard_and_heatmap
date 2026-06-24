@@ -64,6 +64,7 @@ object HeatmapSwipeGeometryVector_v3 {
         for (a in extracted.anchors) {
             if (a.index < 0 || a.index >= size) continue
             val label = a.key?.toString()
+            val center = if (a.key != null) keyModel.centerFor(a.key) else null
             out.add(
                 AnchorRow(
                     sample = HeatmapSwipeGeometryVector_v1.PointSample(
@@ -73,6 +74,8 @@ object HeatmapSwipeGeometryVector_v3 {
                         label = label,
                         role = HeatmapSwipeKeyRoleClassifier_v1.roleForLabel(finalWord, label),
                         angleDeg = Math.toDegrees(a.turnAngleRad),
+                        keyCenterX = center?.get(0)?.toInt() ?: -1,
+                        keyCenterY = center?.get(1)?.toInt() ?: -1,
                     ),
                     type = a.type,
                 ),

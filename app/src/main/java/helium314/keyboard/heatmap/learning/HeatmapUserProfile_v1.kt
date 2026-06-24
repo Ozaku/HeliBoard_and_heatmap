@@ -16,6 +16,11 @@ object HeatmapUserProfile_v1 {
     // word -> global boost count
     private val globalWordCounts = HashMap<String, Int>()
 
+    data class SpatialOffset(var xOffset: Float = 0f, var yOffset: Float = 0f, var count: Int = 0)
+    
+    // char -> spatial offset
+    private val keyOffsets = HashMap<Char, SpatialOffset>()
+
     @JvmStatic
     fun onChainResolved(context: Context, chain: HeatmapSwipeCorrectionChain_v2.ResolvedChain) {
         val finalWord = chain.finalWord.lowercase()
@@ -25,15 +30,34 @@ object HeatmapUserProfile_v1 {
         globalWordCounts[finalWord] = (globalWordCounts[finalWord] ?: 0) + 1
         updated = true
 
-        // Shape-specific boost
+        // Shape-specific boost & Spatial Offsets
         for (attempt in chain.attempts) {
-            if (attempt.outcome != WordSessionOutcome_v1.KEPT_IN_FIELD) {
-                val geo = attempt.geometry
-                if (geo != null && geo.cornerPoints.isNotEmpty()) {
+            val geo = attempt.geometry
+            if (geo != null && geo.cornerPoints.isNotEmpty()) {
+                if (attempt.outcome != WordSessionOutcome_v1.KEPT_IN_FIELD) {
                     val anchorStr = geo.cornerPoints.joinToString("") { it.label ?: "" }
                     if (anchorStr.isNotEmpty()) {
                         val wordMap = shapeToWordCounts.getOrPut(anchorStr) { HashMap() }
                         wordMap[finalWord] = (wordMap[finalWord] ?: 0) + 1
+                    }
+                }
+                
+                // Spatial offsets from successful or corrected swipes
+                // We only learn offsets if the number of anchors matches the collapsed word length,
+                // meaning we have high confidence in the 1:1 mapping of anchor to intended letter.
+                val collapsedFinal = collapseAdjacent(finalWord.filter { it.isLetter() }.map { it.lowercaseChar() })
+                if (collapsedFinal.size == geo.cornerPoints.size) {
+                    for (i in geo.cornerPoints.indices) {
+                        val intendedChar = collapsedFinal[i]
+                        val anchor = geo.cornerPoints[i]
+                        if (anchor.keyCenterX >= 0 && anchor.keyCenterY >= 0) {
+                            val dx = anchor.x - anchor.keyCenterX.toFloat()
+                            val dy = anchor.y - anchor.keyCenterY.toFloat()
+                            val offset = keyOffsets.getOrPut(intendedChar) { SpatialOffset() }
+                            offset.xOffset = (offset.xOffset * offset.count + dx) / (offset.count + 1)
+                            offset.yOffset = (offset.yOffset * offset.count + dy) / (offset.count + 1)
+                            offset.count++
+                        }
                     }
                 }
             }
@@ -42,6 +66,17 @@ object HeatmapUserProfile_v1 {
         if (updated) {
             save(context)
         }
+    }
+
+    private fun collapseAdjacent(keys: List<Char>): List<Char> {
+        if (keys.size < 2) return keys
+        val out = ArrayList<Char>(keys.size)
+        var last: Char? = null
+        for (k in keys) {
+            if (k != last) out.add(k)
+            last = k
+        }
+        return out
     }
 
     @JvmStatic
@@ -55,9 +90,16 @@ object HeatmapUserProfile_v1 {
     }
 
     @JvmStatic
+    fun getOffsetX(ch: Char): Float = keyOffsets[ch.lowercaseChar()]?.xOffset ?: 0f
+
+    @JvmStatic
+    fun getOffsetY(ch: Char): Float = keyOffsets[ch.lowercaseChar()]?.yOffset ?: 0f
+
+    @JvmStatic
     fun clear(context: Context) {
         shapeToWordCounts.clear()
         globalWordCounts.clear()
+        keyOffsets.clear()
         save(context)
     }
 
@@ -76,6 +118,16 @@ object HeatmapUserProfile_v1 {
             val globalObj = JSONObject()
             for ((w, c) in globalWordCounts) globalObj.put(w, c)
             root.put("globalWordCounts", globalObj)
+            
+            val offsetsObj = JSONObject()
+            for ((ch, offset) in keyOffsets) {
+                val oObj = JSONObject()
+                oObj.put("x", offset.xOffset.toDouble())
+                oObj.put("y", offset.yOffset.toDouble())
+                oObj.put("count", offset.count)
+                offsetsObj.put(ch.toString(), oObj)
+            }
+            root.put("keyOffsets", offsetsObj)
             
             file.writeText(root.toString())
         } catch (e: Exception) {
@@ -114,6 +166,22 @@ object HeatmapUserProfile_v1 {
                     globalWordCounts[w] = globalObj.getInt(w)
                 }
             }
+
+            keyOffsets.clear()
+            val offsetsObj = root.optJSONObject("keyOffsets")
+            if (offsetsObj != null) {
+                for (chStr in offsetsObj.keys()) {
+                    if (chStr.isNotEmpty()) {
+                        val oObj = offsetsObj.getJSONObject(chStr)
+                        keyOffsets[chStr[0]] = SpatialOffset(
+                            xOffset = oObj.optDouble("x", 0.0).toFloat(),
+                            yOffset = oObj.optDouble("y", 0.0).toFloat(),
+                            count = oObj.optInt("count", 0)
+                        )
+                    }
+                }
+            }
+
             profileLoaded = true
         } catch (e: Exception) {
             Log.e(TAG, "Failed to load profile", e)

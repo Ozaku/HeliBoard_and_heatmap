@@ -4,7 +4,7 @@
     <string name="heatmap_smart_keyboard_title" translatable="false">Heatmap Smart Keyboard</string>
     <string name="heatmap_smart_keyboard_summary" translatable="false">Swipe learning, word slots, and correction memory (beta)</string>
     <string name="heatmap_learning_enabled_title" translatable="false">Enable learning</string>
-    <string name="heatmap_learning_enabled_summary" translatable="false">Record typing patterns for swipe accuracy and heatmap training</string>
+    <string name="heatmap_learning_enabled_summary" translatable="false">Record typing patterns for swipe accuracy, personal dictionary boosts, and spatial key offsets (the heatmap)</string>
     <string name="heatmap_paragraph_window_title" translatable="false">Correction memory window</string>
     <string name="heatmap_paragraph_window_summary" translatable="false">How much recent text is kept for learning (characters)</string>
     <string name="heatmap_status_title" translatable="false">Instrumentation status</string>
@@ -31,9 +31,9 @@
     <string name="heatmap_reset_swipe_path_confirm_message" translatable="false">Deletes stored swipe curve buckets and swipe-only finger-alignment offsets. Your committed-word history and tap learning stay intact.</string>
     <string name="heatmap_reset_swipe_path_done" translatable="false">Swipe path biases were cleared.</string>
     <string name="heatmap_reset_geometry_title" translatable="false">Reset key geometry</string>
-    <string name="heatmap_reset_geometry_summary" translatable="false">Clears per-layout key bounds and alignment offsets (tap and swipe). Commits and path buckets are kept.</string>
+    <string name="heatmap_reset_geometry_summary" translatable="false">Clears per-layout key bounds and learned spatial key offsets (the heatmap). Commits and path buckets are kept.</string>
     <string name="heatmap_reset_geometry_confirm_title" translatable="false">Reset key geometry?</string>
-    <string name="heatmap_reset_geometry_confirm_message" translatable="false">Deletes stored key bounds and all alignment offsets. The keyboard will re-measure layout geometry on the next commits.</string>
+    <string name="heatmap_reset_geometry_confirm_message" translatable="false">Deletes stored key bounds and all learned spatial key offsets. The keyboard will re-measure layout geometry on the next commits and forget your personal key centers.</string>
     <string name="heatmap_reset_geometry_done" translatable="false">Key geometry data was cleared.</string>
     <string name="heatmap_reset_typo_weights_title" translatable="false">Reset Personal Dictionary Boosts</string>
     <string name="heatmap_reset_typo_weights_summary" translatable="false">Clears learned swipe shape boosts and word frequency boosts. Commits and key seen-counts are kept.</string>

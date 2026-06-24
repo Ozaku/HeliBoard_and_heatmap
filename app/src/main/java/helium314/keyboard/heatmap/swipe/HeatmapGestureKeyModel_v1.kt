@@ -49,7 +49,9 @@ class HeatmapGestureKeyModel_v1 private constructor(
             val centers = HashMap<Char, DoubleArray>(entries.size * 2)
             for (e in entries) {
                 val c = e.storageLabel[0]
-                centers[c] = doubleArrayOf(e.centerX.toDouble(), e.centerY.toDouble())
+                val dx = helium314.keyboard.heatmap.learning.HeatmapUserProfile_v1.getOffsetX(c).toDouble()
+                val dy = helium314.keyboard.heatmap.learning.HeatmapUserProfile_v1.getOffsetY(c).toDouble()
+                centers[c] = doubleArrayOf(e.centerX.toDouble() + dx, e.centerY.toDouble() + dy)
             }
             val spacing = estimateSpacing(centers)
             val reach = spacing * HeatmapGestureTuningConstants_v1.NEIGHBOR_FACTOR

@@ -30,6 +30,8 @@ object HeatmapSwipeGeometryVector_v1 {
         val label: String?,
         val role: KeyRole,
         val angleDeg: Double,
+        val keyCenterX: Int = -1,
+        val keyCenterY: Int = -1,
     )
 
     data class SegmentSample(
